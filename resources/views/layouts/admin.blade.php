@@ -306,12 +306,28 @@
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
 
             .sidebar.show {
                 transform: translateX(0);
+            }
+
+            .sidebar.show::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: -1;
             }
 
             .main-content {
@@ -544,6 +560,26 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js');
     });
 }
+
+// Sidebar Toggle Script
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            sidebar.classList.toggle('show');
+        });
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    }
+});
 </script>
     @stack('js')
 </body>
