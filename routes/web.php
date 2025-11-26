@@ -15,6 +15,34 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+});
+
+// Admin Routes
+Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('dashboard');
+
+    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
+    Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::post('/users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
+    // Activity logs (admin)
+    Route::get('activities', [\App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activities.index');
+    Route::get('activities/management', [\App\Http\Controllers\Admin\ActivityController::class, 'management'])->name('activities.management');
+    Route::get('activities-archives', [\App\Http\Controllers\Admin\ActivityController::class, 'archives'])->name('activities.archives');
+    Route::post('activities/archive', [\App\Http\Controllers\Admin\ActivityController::class, 'archive'])->name('activities.archive');
+    Route::post('activities/cleanup', [\App\Http\Controllers\Admin\ActivityController::class, 'cleanup'])->name('activities.cleanup');
+    Route::post('activities/truncate', [\App\Http\Controllers\Admin\ActivityController::class, 'truncate'])->name('activities.truncate');
+    Route::post('activities-archives/{archive}/restore', [\App\Http\Controllers\Admin\ActivityController::class, 'restoreArchive'])->name('activities.restore-archive');
+    Route::get('activities/{activity}', [\App\Http\Controllers\Admin\ActivityController::class, 'show'])->name('activities.show');
+    // Activity log settings
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('activity-log', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'index'])->name('activity-log.index');
+        Route::post('activity-log', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'update'])->name('activity-log.update');
+        Route::post('activity-log/{setting}/toggle', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'toggle'])->name('activity-log.toggle');
+    });
 });
 
 require __DIR__.'/auth.php';
