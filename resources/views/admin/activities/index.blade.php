@@ -54,21 +54,21 @@
             </div>
         </form>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover table-sm mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Waktu</th>
+                        <th class="text-nowrap">Waktu</th>
                         <th>User</th>
                         <th>Deskripsi</th>
-                        <th>Model</th>
-                        <th>Properties</th>
-                        <th></th>
+                        <th class="text-nowrap">Model</th>
+                        <th class="d-none d-lg-table-cell">Properties</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($activities as $activity)
                         <tr>
-                            <td class="small text-muted">{{ $activity->created_at->diffForHumans() }}</td>
+                            <td class="small text-muted text-nowrap">{{ $activity->created_at->diffForHumans() }}</td>
                             <td>
                                 @if($activity->causer)
                                     {{ $activity->causer->name }}<br>
@@ -77,11 +77,11 @@
                                     <span class="text-muted">system</span>
                                 @endif
                             </td>
-                            <td>{{ $activity->description }}</td>
-                            <td class="small text-muted">{{ class_basename($activity->subject_type ?? '') }} @if($activity->subject)<br><small>{{ optional($activity->subject)->id }}</small>@endif</td>
-                            <td class="small text-muted">@if($activity->properties->isNotEmpty())<pre style="margin:0; max-width:300px; white-space:pre-wrap">{{ $activity->properties->toJson() }}</pre>@endif</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.activities.show', $activity) }}" class="btn btn-sm btn-outline-primary">Detail</a>
+                            <td class="text-truncate" style="max-width: 150px;" title="{{ $activity->description }}">{{ $activity->description }}</td>
+                            <td class="small text-muted text-nowrap">{{ class_basename($activity->subject_type ?? '') }}</td>
+                            <td class="small text-muted d-none d-lg-table-cell">@if($activity->properties->isNotEmpty())<pre style="margin:0; max-width:250px; white-space:pre-wrap; font-size:0.75rem">{{ $activity->properties->toJson() }}</pre>@endif</td>
+                            <td class="text-center">
+                                <a href="{{ route('admin.activities.show', $activity) }}" class="btn btn-sm btn-outline-primary" title="Lihat Detail"><i class="bi bi-eye"></i></a>
                             </td>
                         </tr>
                     @empty

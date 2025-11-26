@@ -69,7 +69,7 @@
 <!-- Users Table -->
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover table-sm mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Nama</th>
@@ -86,7 +86,7 @@
                             <i class="bi bi-person-circle" style="color: #667eea;"></i>
                             {{ $user->name }}
                         </td>
-                        <td class="text-muted small">{{ $user->email }}</td>
+                        <td class="text-muted small text-truncate" style="max-width: 150px;" title="{{ $user->email }}">{{ $user->email }}</td>
                         <td>
                             @foreach($user->roles as $role)
                                 <span class="badge bg-{{ $role->name === 'super-admin' ? 'danger' : ($role->name === 'admin' ? 'primary' : ($role->name === 'editor' ? 'warning' : 'secondary')) }}">

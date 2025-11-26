@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - Admin Panel</title>
     
+    <!-- PWA Manifest & Theme -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -326,7 +333,24 @@
             }
 
             .table {
-                font-size: 0.875rem;
+                font-size: 0.85rem;
+            }
+
+            .table td, .table th {
+                padding: 0.5rem 0.25rem !important;
+            }
+
+            .btn-group-sm {
+                gap: 2px;
+            }
+
+            .btn-group-sm .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .badge {
+                font-size: 0.7rem;
             }
 
             .action-buttons {
@@ -337,6 +361,14 @@
                 flex: 1;
                 min-width: 60px;
             }
+        }
+
+        .text-truncate-2 {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         /* Animations */
@@ -503,37 +535,16 @@
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
+    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Register Service Worker for PWA -->
     <script>
-        // Sidebar Toggle untuk Mobile
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.querySelector('.sidebar');
-
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('show');
-            });
-        }
-
-        // Close sidebar saat klik di luar
-        document.addEventListener('click', function(event) {
-            const isSidebar = event.target.closest('.sidebar');
-            const isToggle = event.target.closest('#sidebarToggle');
-            
-            if (!isSidebar && !isToggle && sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
-            }
-        });
-
-        // Auto-hide alerts
-        document.querySelectorAll('.alert').forEach(function(alert) {
-            setTimeout(function() {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            }, 4000);
-        });
-    </script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js');
+    });
+}
+</script>
     @stack('js')
 </body>
 </html>

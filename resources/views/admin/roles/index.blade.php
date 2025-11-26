@@ -21,7 +21,7 @@
     <div class="card-body">
         @if($roles->count() > 0)
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover table-sm">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -39,9 +39,9 @@
                                 <td>
                                     <span class="badge bg-primary">{{ $role->name }}</span>
                                 </td>
-                                <td>
+                                <td class="text-truncate-2" style="max-width: 150px;" title="{{ $role->description }}">
                                     @if($role->description)
-                                        {{ Str::limit($role->description, 50) }}
+                                        {{ $role->description }}
                                     @else
                                         <span class="text-muted-sm">-</span>
                                     @endif

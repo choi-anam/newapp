@@ -62,7 +62,7 @@
                 <div class="card-body">
                     @if($archives->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover table-sm">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Waktu Arsip</th>

@@ -21,7 +21,7 @@
     <div class="card-body">
         @if($permissions->count() > 0)
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover table-sm">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -38,9 +38,9 @@
                                 <td>
                                     <span class="badge bg-success">{{ $permission->name }}</span>
                                 </td>
-                                <td>
+                                <td class="text-truncate-2" style="max-width: 150px;" title="{{ $permission->description }}">
                                     @if($permission->description)
-                                        {{ Str::limit($permission->description, 50) }}
+                                        {{ $permission->description }}
                                     @else
                                         <span class="text-muted-sm">-</span>
                                     @endif
