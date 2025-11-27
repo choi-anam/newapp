@@ -7,8 +7,16 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method === 'GET' && event.request.url.includes('/api/')) {
-    // Network-first strategy untuk API requests
+  const url = new URL(event.request.url);
+
+  // Network-first untuk API dan halaman HTML dinamis
+  if (event.request.method === 'GET' && (
+    url.pathname.includes('/api/') ||
+    url.pathname.includes('/admin/') ||
+    url.pathname.includes('/activities') ||
+    url.pathname.endsWith('.html') ||
+    !url.pathname.includes('.')
+  )) {
     event.respondWith(
       fetch(event.request).then(networkResponse => {
         return caches.open('v1').then(cache => {
@@ -20,7 +28,7 @@ self.addEventListener('fetch', event => {
       })
     );
   } else {
-    // Cache-first strategy untuk asset statis
+    // Cache-first strategy untuk asset statis (CSS, JS, images)
     event.respondWith(
       caches.open('v1').then(cache => {
         return cache.match(event.request).then(response => {
