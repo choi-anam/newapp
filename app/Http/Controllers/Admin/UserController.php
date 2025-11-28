@@ -204,4 +204,36 @@ class UserController extends Controller
         return redirect()->route('admin.users.show', $user)
             ->with('success', "Password berhasil direset. Password baru: <strong>$newPassword</strong>");
     }
+
+    /**
+     * Get currently online users (last seen within N minutes).
+     */
+    public function onlineData(Request $request)
+    {
+        $minutes = (int)($request->get('minutes', 5));
+        $since = now()->subMinutes(max(1, $minutes));
+
+        $users = User::with('roles')
+            ->whereNotNull('last_seen_at')
+            ->where('last_seen_at', '>=', $since)
+            ->orderByDesc('last_seen_at')
+            ->get();
+
+        $data = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->roles->pluck('name')->values(),
+                'last_seen_at' => optional($user->last_seen_at)->toDateTimeString(),
+                'last_seen_human' => optional($user->last_seen_at)->diffForHumans(),
+            ];
+        });
+
+        return response()->json([
+            'total' => $data->count(),
+            'users' => $data,
+            'since' => $since->toDateTimeString(),
+        ]);
+    }
 }

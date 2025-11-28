@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Admin Routes
-Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class, 'track.activity'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->pr
     // Users API & Export
     Route::get('users-data', [\App\Http\Controllers\Admin\UserController::class, 'getData'])->name('users.data');
     Route::get('users-export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');
+    Route::get('users-online-data', [\App\Http\Controllers\Admin\UserController::class, 'onlineData'])->name('users.online-data');
     
     // Activity logs (admin)
     Route::get('activities', [\App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activities.index');

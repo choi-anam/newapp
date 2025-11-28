@@ -9,6 +9,17 @@
         <i class="bi bi-speedometer2"></i>
         Dashboard
     </h1>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.users.index') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-people"></i> Kelola Users
+        </a>
+        <a href="{{ route('admin.activities.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-clock-history"></i> Activity Log
+        </a>
+        <a href="{{ route('admin.activities.archives') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-archive"></i> Arsip Aktivitas
+        </a>
+    </div>
 </div>
 
 <!-- Statistics Cards -->
@@ -94,10 +105,18 @@
                         $enabledCount = $settings->where('enabled', true)->count();
                         $disabledCount = $settings->where('enabled', false)->count();
                         $totalCount = $settings->count();
+                        $totalLogs = \Spatie\Activitylog\Models\Activity::count();
+                        $logsToday = \Spatie\Activitylog\Models\Activity::whereDate('created_at', now()->toDateString())->count();
+                        $logsThisMonth = \Spatie\Activitylog\Models\Activity::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+                        $archivedCount = \App\Models\ActivityLogArchive::count();
                     } catch (\Exception $e) {
                         $enabledCount = 0;
                         $disabledCount = 0;
                         $totalCount = 0;
+                        $totalLogs = 0;
+                        $logsToday = 0;
+                        $logsThisMonth = 0;
+                        $archivedCount = 0;
                     }
                 @endphp
                 
@@ -122,9 +141,38 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row text-center mt-2">
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded border-left-primary">
+                                <div class="h5 mb-0">{{ $totalLogs }}</div>
+                                <small class="text-muted">Total Logs</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded border-left-primary">
+                                <div class="h5 mb-0">{{ $logsToday }}</div>
+                                <small class="text-muted">Logs Hari Ini</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded border-left-primary">
+                                <div class="h5 mb-0">{{ $logsThisMonth }}</div>
+                                <small class="text-muted">Logs Bulan Ini</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="p-3 bg-light rounded border-left-primary">
+                                <div class="h5 mb-0">{{ $archivedCount }}</div>
+                                <small class="text-muted">Total Arsip</small>
+                            </div>
+                        </div>
+                    </div>
                     <div class="text-center mt-3">
                         <a href="{{ route('admin.settings.activity-log.index') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-sliders"></i> Configure Tracking
+                        </a>
+                        <a href="{{ route('admin.activities.management') }}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-gear"></i> Manage / Archive
                         </a>
                     </div>
                 @else
@@ -171,6 +219,23 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Online Users -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-wifi"></i> User Online (5 menit terakhir)</span>
+                <small id="online-users-updated" class="text-muted-sm"></small>
+            </div>
+            <div class="card-body">
+                <div id="online-users-empty" class="text-muted-sm">Memuat data user online...</div>
+                <ul id="online-users-list" class="list-group list-group-flush d-none"></ul>
+            </div>
+        </div>
+    </div>
+    
 </div>
 
 <!-- Recent Roles -->
@@ -290,6 +355,20 @@
     </div>
 </div>
 
+<!-- Mini Charts: Logs 7 hari terakhir -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Tren Aktivitas (7 Hari Terakhir)
+            </div>
+            <div class="card-body">
+                <canvas id="logsTrendChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Info Cards -->
 <div class="row mt-4">
     <div class="col-lg-6 mb-3">
@@ -325,3 +404,104 @@
     </div>
 </div>
 @endsection
+
+@push('js')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Build last 7 days labels and counts inline via PHP
+    const labels = [
+        @php
+            $days = collect(range(6,0))->map(function($d){ return now()->subDays($d); });
+            echo $days->map(fn($d) => '"'.$d->format('d M').'"')->implode(',');
+        @endphp
+    ];
+    const dataCounts = [
+        @php
+            $counts = $days->map(function($d){
+                return \Spatie\Activitylog\Models\Activity::whereDate('created_at', $d->toDateString())->count();
+            });
+            echo $counts->implode(',');
+        @endphp
+    ];
+
+    const ctx = document.getElementById('logsTrendChart');
+    if (ctx && window.Chart) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Aktivitas / Hari',
+                    data: dataCounts,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.15)',
+                    tension: 0.3,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision:0 } }
+                }
+            }
+        });
+    }
+});
+
+// Online users auto-refresh
+document.addEventListener('DOMContentLoaded', function () {
+    const listEl = document.getElementById('online-users-list');
+    const emptyEl = document.getElementById('online-users-empty');
+    const updatedEl = document.getElementById('online-users-updated');
+
+    async function fetchOnlineUsers() {
+        try {
+            const res = await fetch("{{ route('admin.users.online-data') }}?minutes=5", { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+            if (!res.ok) throw new Error('Failed to fetch');
+            const json = await res.json();
+            const users = json.users || [];
+
+            listEl.innerHTML = '';
+            if (users.length === 0) {
+                emptyEl.textContent = 'Tidak ada user online saat ini.';
+                emptyEl.classList.remove('d-none');
+                listEl.classList.add('d-none');
+            } else {
+                emptyEl.classList.add('d-none');
+                listEl.classList.remove('d-none');
+
+                users.forEach(u => {
+                    const roles = (u.roles || []).map(r => `<span class="badge bg-secondary me-1">${r}</span>`).join('');
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div>
+                            <div><strong>${u.name}</strong> <small class="text-muted">${u.email || ''}</small></div>
+                            <div>${roles}</div>
+                        </div>
+                        <div class="small text-muted">${u.last_seen_human || ''}</div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+
+            const now = new Date();
+            updatedEl.textContent = `Diperbarui: ${now.toLocaleTimeString()}`;
+        } catch (e) {
+            emptyEl.textContent = 'Gagal memuat data user online.';
+            emptyEl.classList.remove('d-none');
+            listEl.classList.add('d-none');
+        }
+    }
+
+    fetchOnlineUsers();
+    setInterval(fetchOnlineUsers, 30000); // 30s
+});
+</script>
+@endpush
