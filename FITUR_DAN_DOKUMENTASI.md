@@ -1,6 +1,6 @@
 # 📋 Dokumentasi Fitur Admin Panel & Activity Logging System
 
-**Last Updated:** November 28, 2025  
+**Last Updated:** November 28, 2025 (Landing Page & Online Users added)  
 **Laravel Version:** 12.40.1  
 **PHP Version:** 8.2.12
 
@@ -24,6 +24,11 @@
 ## Overview Sistem
 
 Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan Spatie), **Activity Logging** lengkap, **Export Excel**, dan **Grid.js** untuk tracking semua aktivitas user di admin panel.
+
+### Penambahan Terbaru:
+- 🌐 Landing page baru (Bootstrap 5) di `/` dengan hero, fitur, statistik, dan tautan GitHub.
+- 🟢 Fitur "Online Users" dengan tracking `last_seen_at` otomatis via middleware global.
+- 🔄 Dashboard menampilkan daftar user aktif (terlihat dalam 5 menit terakhir) auto-refresh.
 
 ### Teknologi Utama:
 - **Laravel 12** - Framework
@@ -156,7 +161,46 @@ Activity otomatis direkam untuk:
 - Causer: User yang melakukan aksi
 - Properties: old values, changes, attributes
 - Event: created/updated/deleted/restored
+- Timestamp: created_at (waktu aksi)
 ```
+
+### 3. 🟢 Online Users Tracking
+
+Menampilkan user yang aktif/terhubung baru-baru ini (default: 5 menit terakhir).
+
+**Implementasi:**
+- Kolom baru `users.last_seen_at` (nullable timestamp, indexed)
+- Middleware global: `app/Http/Middleware/TrackUserActivity.php` → update `last_seen_at` setiap ≥60 detik per user untuk efisiensi.
+- Endpoint data JSON: `GET /admin/users-online-data` (method `UserController@onlineData`).
+- Dashboard card: menampilkan list user online dengan roles + waktu terakhir aktif.
+
+**Logika Waktu Aktif:**
+```php
+User::where('last_seen_at', '>=', now()->subMinutes(5))
+```
+
+**Throttle Update:**
+```php
+if ($user->last_seen_at === null || $user->last_seen_at->diffInSeconds(now()) >= 60) {
+  $user->forceFill(['last_seen_at' => now()])->save();
+}
+```
+
+**File Terkait:**
+- Middleware: `app/Http/Middleware/TrackUserActivity.php`
+- Model: `app/Models/User.php` (cast `last_seen_at`)
+- Route: `routes/web.php` (admin group: `admin/users-online-data`)
+- View: `resources/views/admin/dashboard.blade.php`
+
+**Keamanan & Optimasi:**
+- Write dibatasi minimal 60 detik sekali per user.
+- Hanya user terautentikasi yang di-track.
+- Tidak menggunakan sesi tambahan.
+
+**Pengembangan Lanjutan (Opsional):**
+- Tambah konfigurasi interval (env/config)
+- Tambah status presence lebih detail (idle/active)
+- Tambah WebSocket untuk real-time instan.
 
 ---
 
@@ -531,6 +575,7 @@ GET    /admin/users/{user}/edit     - Edit form (admin.users.edit)
 PUT    /admin/users/{user}          - Update (admin.users.update)
 DELETE /admin/users/{user}          - Delete (admin.users.destroy)
 POST   /admin/users/{user}/reset-password - Reset password (admin.users.reset-password)
+GET    /admin/users-online-data     - Online users JSON (admin.users.online-data)
 ```
 
 ### Activity Routes:
@@ -574,6 +619,7 @@ GET    /admin/users-export          - Export users (admin.users.export)
 - email_verified_at
 - password
 - password_reset_token
+- last_seen_at (timestamp, nullable, indexed) -- tracking user activity presence
 - created_at, updated_at
 ```
 
@@ -780,6 +826,8 @@ Sistem admin panel ini menyediakan:
 - ✅ DB-driven configuration
 - ✅ Automatic observer-based logging
 - ✅ Responsive Bootstrap UI
+- ✅ Online users presence tracking
+- ✅ Modern landing page publik
 - ✅ Indonesian language support
 
 Siap untuk production! 🚀
