@@ -30,12 +30,34 @@
                 @enderror
             </div>
 
+            <!-- Username -->
+            <div class="mb-3">
+                <label for="username" class="form-label">Username <small class="text-muted">(Opsional)</small></label>
+                <input id="username" class="form-control @error('username') is-invalid @enderror" 
+                       type="text" name="username" value="{{ old('username') }}" 
+                       autocomplete="username" placeholder="username_anda">
+                @error('username')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <!-- UID -->
+            <div class="mb-3">
+                <label for="uid" class="form-label">UID <small class="text-muted">(Opsional)</small></label>
+                <input id="uid" class="form-control @error('uid') is-invalid @enderror" 
+                       type="text" name="uid" value="{{ old('uid') }}" 
+                       autocomplete="off" placeholder="ID unik Anda">
+                @error('uid')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
             <!-- Email Address -->
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input id="email" class="form-control @error('email') is-invalid @enderror" 
                        type="email" name="email" value="{{ old('email') }}" 
-                       required autocomplete="username" placeholder="nama@contoh.com">
+                       required autocomplete="email" placeholder="nama@contoh.com">
                 @error('email')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

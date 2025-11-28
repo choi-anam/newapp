@@ -79,6 +79,12 @@
                     <div class="col-md-6">
                         <h6 class="mb-2">Informasi User</h6>
                         <p class="mb-1"><strong>Nama:</strong> {{ $user->name }}</p>
+                        @if($user->username)
+                            <p class="mb-1"><strong>Username:</strong> {{ $user->username }}</p>
+                        @endif
+                        @if($user->uid)
+                            <p class="mb-1"><strong>UID:</strong> {{ $user->uid }}</p>
+                        @endif
                         <p class="mb-1"><strong>Email:</strong> {{ $user->email }}</p>
                         <p class="mb-0"><strong>Status:</strong> <span class="badge bg-success">Aktif</span></p>
                     </div>

@@ -20,13 +20,13 @@
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
-            <!-- Email Address -->
+            <!-- Login (Email/Username/UID) -->
             <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input id="email" class="form-control @error('email') is-invalid @enderror" 
-                       type="email" name="email" value="{{ old('email') }}" 
-                       required autofocus autocomplete="username" placeholder="nama@contoh.com">
-                @error('email')
+                <label for="login" class="form-label">Email / Username / UID</label>
+                <input id="login" class="form-control @error('login') is-invalid @enderror" 
+                       type="text" name="login" value="{{ old('login') }}" 
+                       required autofocus autocomplete="username" placeholder="Masukkan email, username, atau UID">
+                @error('login')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>

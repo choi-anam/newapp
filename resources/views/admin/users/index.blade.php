@@ -73,6 +73,7 @@
             <thead class="table-light">
                 <tr>
                     <th>Nama</th>
+                    <th class="d-none d-md-table-cell">Username/UID</th>
                     <th>Email</th>
                     <th>Roles</th>
                     <th>Terdaftar</th>
@@ -85,6 +86,17 @@
                         <td class="fw-500">
                             <i class="bi bi-person-circle" style="color: #667eea;"></i>
                             {{ $user->name }}
+                        </td>
+                        <td class="text-muted small d-none d-md-table-cell">
+                            @if($user->username)
+                                <span class="badge bg-info">@{{ $user->username }}</span>
+                            @endif
+                            @if($user->uid)
+                                <br><small>UID: {{ $user->uid }}</small>
+                            @endif
+                            @if(!$user->username && !$user->uid)
+                                <span class="text-muted">-</span>
+                            @endif
                         </td>
                         <td class="text-muted small text-truncate" style="max-width: 150px;" title="{{ $user->email }}">{{ $user->email }}</td>
                         <td>

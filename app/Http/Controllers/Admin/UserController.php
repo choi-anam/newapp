@@ -35,13 +35,17 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'username' => 'nullable|string|max:255|unique:users',
+            'uid' => 'nullable|string|max:255|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
             'roles' => 'array|exists:roles,name',
         ]);
 
         $user = User::create([
             'name' => $request->name,
+            'username' => $request->username,
+            'uid' => $request->uid,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
@@ -80,12 +84,16 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255|unique:users,username,' . $user->id,
+            'uid' => 'nullable|string|max:255|unique:users,uid,' . $user->id,
             'email' => 'required|email|unique:users,email,' . $user->id,
             'roles' => 'array|exists:roles,name',
         ]);
 
         $user->update([
             'name' => $request->name,
+            'username' => $request->username,
+            'uid' => $request->uid,
             'email' => $request->email,
         ]);
 

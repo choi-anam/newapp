@@ -30,6 +30,26 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control @error('username') is-invalid @enderror" 
+                               id="username" name="username" placeholder="username_pengguna" 
+                               value="{{ old('username', $user->username) }}">
+                        @error('username')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="uid" class="form-label">UID</label>
+                        <input type="text" class="form-control @error('uid') is-invalid @enderror" 
+                               id="uid" name="uid" placeholder="ID unik pengguna" 
+                               value="{{ old('uid', $user->uid) }}">
+                        @error('uid')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control @error('email') is-invalid @enderror" 
                                id="email" name="email" placeholder="user@example.com" 
