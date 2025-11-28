@@ -407,6 +407,56 @@
 
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/laravel-echo/dist/echo.iife.js"></script>
+<script>
+// Configure Echo for Laravel Reverb (first-party websockets)
+window.Echo = new Echo({
+    broadcaster: 'reverb',
+    key: '{{ config('broadcasting.connections.reverb.key', 'local') }}',
+    wsHost: '{{ request()->getHost() }}',
+    wsPort: {{ config('broadcasting.connections.reverb.port', 8080) }},
+    wssPort: {{ config('broadcasting.connections.reverb.port', 8080) }},
+    forceTLS: false,
+    enabledTransports: ['ws'],
+});
+
+// Subscribe to online users updates and render instantly
+window.Echo.channel('online-users')
+    .listen('.OnlineUsersUpdated', (e) => {
+        try {
+            const users = e.users || [];
+            const listEl = document.getElementById('online-users-list');
+            const emptyEl = document.getElementById('online-users-empty');
+            const updatedEl = document.getElementById('online-users-updated');
+
+            listEl.innerHTML = '';
+            if (users.length === 0) {
+                emptyEl.textContent = 'Tidak ada user online saat ini.';
+                emptyEl.classList.remove('d-none');
+                listEl.classList.add('d-none');
+            } else {
+                emptyEl.classList.add('d-none');
+                listEl.classList.remove('d-none');
+
+                users.forEach(u => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div>
+                            <div><strong>${u.name}</strong> <small class="text-muted">${u.email || ''}</small></div>
+                        </div>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+
+            const now = new Date();
+            updatedEl.textContent = `Diperbarui (WebSocket): ${now.toLocaleTimeString()}`;
+        } catch (err) {
+            // no-op
+        }
+    });
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Build last 7 days labels and counts inline via PHP
@@ -501,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     fetchOnlineUsers();
-    setInterval(fetchOnlineUsers, 30000); // 30s
+    setInterval(fetchOnlineUsers, 30000); // 30s fallback (SSE/WebSocket may update faster)
 });
 </script>
 @endpush

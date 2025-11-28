@@ -14,10 +14,24 @@ class TrackUserActivity
 
         if (auth()->check()) {
             $user = auth()->user();
-            $now = now();
-            $shouldUpdate = !$user->last_seen_at || $user->last_seen_at->diffInSeconds($now) >= 60;
+            $shouldUpdate = $user->last_seen_at === null || $user->last_seen_at->diffInSeconds(now()) >= 60;
             if ($shouldUpdate) {
-                $user->forceFill(['last_seen_at' => $now])->save();
+                $user->forceFill(['last_seen_at' => now()])->save();
+
+                // Broadcast updated online users snapshot via websocket
+                try {
+                    $online = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5))
+                        ->select(['id', 'name', 'email'])
+                        ->get()
+                        ->map(fn($u) => [
+                            'id' => $u->id,
+                            'name' => $u->name,
+                            'email' => $u->email,
+                        ])->toArray();
+                    event(new \App\Events\OnlineUsersUpdated($online));
+                } catch (\Throwable $e) {
+                    // Silently ignore broadcast errors to avoid impacting request
+                }
             }
         }
 
