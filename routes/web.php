@@ -28,10 +28,21 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->pr
     Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::post('/users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
+    
+    // Users API & Export
+    Route::get('users-data', [\App\Http\Controllers\Admin\UserController::class, 'getData'])->name('users.data');
+    Route::get('users-export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');
+    
     // Activity logs (admin)
     Route::get('activities', [\App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/management', [\App\Http\Controllers\Admin\ActivityController::class, 'management'])->name('activities.management');
     Route::get('activities-archives', [\App\Http\Controllers\Admin\ActivityController::class, 'archives'])->name('activities.archives');
+    Route::get('activities-archives-export', [\App\Http\Controllers\Admin\ActivityController::class, 'exportArchives'])->name('activities.archives-export');
+    Route::delete('activities-archives/{archive}', [\App\Http\Controllers\Admin\ActivityController::class, 'destroyArchive'])->name('activities.archives-destroy');
+    Route::post('activities-archives/bulk-delete', [\App\Http\Controllers\Admin\ActivityController::class, 'bulkDeleteArchives'])->name('activities.archives-bulk-delete');
+    Route::post('activities-archives/bulk-restore', [\App\Http\Controllers\Admin\ActivityController::class, 'bulkRestoreArchives'])->name('activities.archives-bulk-restore');
+    Route::get('activities-data', [\App\Http\Controllers\Admin\ActivityController::class, 'getData'])->name('activities.data');
+    Route::get('activities-export', [\App\Http\Controllers\Admin\ActivityController::class, 'export'])->name('activities.export');
     Route::post('activities/archive', [\App\Http\Controllers\Admin\ActivityController::class, 'archive'])->name('activities.archive');
     Route::post('activities/cleanup', [\App\Http\Controllers\Admin\ActivityController::class, 'cleanup'])->name('activities.cleanup');
     Route::post('activities/truncate', [\App\Http\Controllers\Admin\ActivityController::class, 'truncate'])->name('activities.truncate');

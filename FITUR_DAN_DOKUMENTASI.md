@@ -1,6 +1,6 @@
 # 📋 Dokumentasi Fitur Admin Panel & Activity Logging System
 
-**Last Updated:** November 27, 2025  
+**Last Updated:** November 28, 2025  
 **Laravel Version:** 12.40.1  
 **PHP Version:** 8.2.12
 
@@ -12,23 +12,28 @@
 2. [Fitur Admin Panel](#fitur-admin-panel)
 3. [Fitur Activity Logging](#fitur-activity-logging)
 4. [Fitur Archive & Cleanup](#fitur-archive--cleanup)
-5. [File & Struktur](#file--struktur)
-6. [Routes](#routes)
-7. [Database Schema](#database-schema)
-8. [Artisan Commands](#artisan-commands)
+5. [Fitur Export Excel](#fitur-export-excel)
+6. [Grid.js Integration](#gridjs-integration)
+7. [File & Struktur](#file--struktur)
+8. [Routes](#routes)
+9. [Database Schema](#database-schema)
+10. [Artisan Commands](#artisan-commands)
 
 ---
 
 ## Overview Sistem
 
-Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan Spatie) dan **Activity Logging** lengkap untuk tracking semua aktivitas user di admin panel.
+Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan Spatie), **Activity Logging** lengkap, **Export Excel**, dan **Grid.js** untuk tracking semua aktivitas user di admin panel.
 
 ### Teknologi Utama:
 - **Laravel 12** - Framework
 - **Spatie Laravel Permission** - RBAC (Role-Based Access Control)
 - **Spatie Activity Log** - Activity Logging
+- **Maatwebsite Excel** - Export to Excel
+- **Grid.js** - Advanced Data Table with AJAX
 - **Bootstrap 5.3** - UI Framework
 - **SQLite** - Database
+- **PWA** - Progressive Web App Support
 
 ---
 
@@ -214,16 +219,22 @@ activity_log_settings:
 **Fitur:**
 - ✅ Lihat semua log yang sudah diarsipkan
 - ✅ Filter berdasarkan log type (manual/scheduled)
+- ✅ Filter berdasarkan tanggal arsip (range: dari-sampai)
 - ✅ Pagination 20 per halaman
 - ✅ Detail modal dengan JSON lengkap
 - ✅ Restore single log dari arsip
 - ✅ Lihat info: waktu arsip, deskripsi, model, user, tipe
+- ✅ Export ke Excel (mengikuti filter aktif)
+- ✅ Hapus arsip massal sesuai filter (dengan konfirmasi)
+- ✅ Pulihkan semua arsip sesuai filter (dengan konfirmasi)
 
 **File Terkait:**
 - Method: `ActivityController@archives()`
 - Method: `ActivityController@restoreArchive()`
+- Method: `ActivityController@exportArchives()`
 - Views: `resources/views/admin/activities/archives.blade.php`
 - Model: `app/Models/ActivityLogArchive.php`
+- Export: `app/Exports/ActivityLogArchivesExport.php`
 
 **Database Schema:**
 ```
@@ -367,6 +378,56 @@ php artisan logs:cleanup --days=365 --force
 
 **File:** `app/Console/Commands/CleanupActivityLogs.php`
 
+
+### 1. Users Export
+
+**URL:** `GET /admin/users-export`
+
+- Men-download semua user sebagai `.xlsx`
+- Kolom: ID, Name, Username, UID, Email, Roles, Created At
+- File: `app/Exports/UsersExport.php`
+
+### 2. Activities Export
+
+**URL:** `GET /admin/activities-export`
+
+- Men-download activity logs (mengikuti filter pada halaman index jika diterapkan via query)
+- Kolom: Time, User, Description, Model, Event, Properties
+- File: `app/Exports/ActivityLogsExport.php`
+
+### 3. Activity Archives Export
+
+**URL:** `GET /admin/activities-archives-export`
+
+- Men-download log arsip (mengikuti filter query):
+  - `log_type=manual|scheduled`
+  - `date_from=YYYY-MM-DD`
+  - `date_to=YYYY-MM-DD`
+- Kolom: Archived At, Description, Model, Model ID, Event, Causer Name, Causer ID, Log Type, Original Created At, Batch UUID
+- File: `app/Exports/ActivityLogArchivesExport.php`
+
+---
+
+## Grid.js Integration
+
+### Halaman yang menggunakan Grid.js
+
+- Users: `GET /admin/users`
+- Activities: `GET /admin/activities`
+
+### Fitur
+
+- Server-side pagination (0-based index)
+- Server-side search (parameter `search`)
+- Auto-refresh setiap 30 detik (`grid.forceRender()`) 
+- Aksi CRUD via tombol (Users: view/edit/delete)
+- Render HTML aman via `gridjs.html(...)` untuk badges/aksi
+
+### API Endpoints
+
+- `GET /admin/users-data?search=&page=&limit=`
+- `GET /admin/activities-data?search=&page=&limit=&user=&model=&date_from=&date_to=`
+
 ---
 
 ## File & Struktur
@@ -409,6 +470,7 @@ resources/views/admin/
 ├── users/ (index, create, edit, show)
 ├── activities/
 │   ├── index.blade.php (activity log listing)
+│   ├── index-gridjs.blade.php (activity log listing dengan Grid.js)
 │   ├── show.blade.php (activity detail)
 │   ├── management.blade.php (archive/cleanup dashboard)
 │   └── archives.blade.php (view archived logs)
@@ -474,22 +536,30 @@ POST   /admin/users/{user}/reset-password - Reset password (admin.users.reset-pa
 ### Activity Routes:
 ```
 GET    /admin/activities                          - List (admin.activities.index)
+GET    /admin/activities-data                     - Data API (admin.activities.data)
 GET    /admin/activities/{activity}               - Detail (admin.activities.show)
 GET    /admin/activities/management               - Archive dashboard (admin.activities.management)
 POST   /admin/activities/archive                  - Archive action (admin.activities.archive)
 POST   /admin/activities/cleanup                  - Cleanup action (admin.activities.cleanup)
 POST   /admin/activities/truncate                 - Truncate action (admin.activities.truncate)
 GET    /admin/activities-archives                 - View archives (admin.activities.archives)
+DELETE /admin/activities-archives/{archive}       - Delete archive (admin.activities.archives-destroy)
+POST   /admin/activities-archives/bulk-delete     - Bulk delete archives (admin.activities.archives-bulk-delete)
+POST   /admin/activities-archives/bulk-restore    - Bulk restore archives (admin.activities.archives-bulk-restore)
+GET    /admin/activities-archives-export          - Export archives (admin.activities.archives-export)
+GET    /admin/activities-export                   - Export activities (admin.activities.export)
 POST   /admin/activities-archives/{archive}/restore - Restore (admin.activities.restore-archive)
 ```
 
 ### Settings Routes:
+GET    /admin/users-data            - Data API (admin.users.data)
 ```
 GET    /admin/settings/activity-log          - View settings (admin.settings.activity-log.index)
 POST   /admin/settings/activity-log          - Update settings (admin.settings.activity-log.update)
 POST   /admin/settings/activity-log/{id}/toggle - Toggle (admin.settings.activity-log.toggle)
 ```
 
+GET    /admin/users-export          - Export users (admin.users.export)
 ---
 
 ## Database Schema

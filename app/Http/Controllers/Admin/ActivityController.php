@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLogArchive;
+use App\Exports\ActivityLogsExport;
+use App\Exports\ActivityLogArchivesExport;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ActivityController extends Controller
 {
@@ -14,59 +17,96 @@ class ActivityController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Activity::with('causer');
+        // For filter form options
+        $users = \App\Models\User::orderBy('name')->get();
+        // Distinct model list based on subject_type (use class basename)
+        $models = Activity::whereNotNull('subject_type')
+            ->pluck('subject_type')
+            ->map(function ($t) { return class_basename($t); })
+            ->unique()
+            ->values();
 
-        // Filter by causer (user id)
+        return view('admin.activities.index-gridjs', compact('users', 'models'));
+    }
+
+    /**
+     * Get activities data for Grid.js (AJAX)
+     */
+    public function getData(Request $request)
+    {
+        $query = Activity::with('causer');
+        
+        // Search
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('log_name', 'like', "%{$search}%")
+                  ->orWhereHas('causer', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Filter by user
         if ($request->filled('user')) {
             $query->where('causer_id', $request->get('user'));
         }
-
-        // Filter by model (accept short name like 'User' or full class)
+        
+        // Filter by model (subject_type basename)
         if ($request->filled('model')) {
-            $modelParam = $request->get('model');
-            // Get mapping of short => full
-            $rawModels = Activity::select('subject_type')->distinct()->pluck('subject_type')->filter()->values();
-            $map = [];
-            foreach ($rawModels as $m) {
-                if (! $m) continue;
-                $map[class_basename($m)] = $m;
-            }
-
-            if (isset($map[$modelParam])) {
-                $query->where('subject_type', $map[$modelParam]);
-            } else {
-                // allow full class name passed directly
-                $query->where('subject_type', $modelParam);
-            }
+            $model = $request->get('model');
+            $query->whereNotNull('subject_type')
+                ->where('subject_type', 'like', "%{$model}%");
         }
 
-        // Date range filter
+        // Filter by date
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->get('date_from'));
         }
-
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->get('date_to'));
         }
+        
+        // Pagination - Grid.js uses 0-based page indexing
+        $page = max(0, $request->get('page', 0));
+        $limit = $request->get('limit', 20);
+        $offset = $page * $limit;
+        
+        $total = $query->count();
+        $activities = $query->latest()->skip($offset)->take($limit)->get();
+        
+        $data = $activities->map(function($activity) {
+            $eventColors = [
+                'created' => 'success',
+                'updated' => 'info',
+                'deleted' => 'danger',
+                'restored' => 'warning'
+            ];
+            $color = $eventColors[$activity->event] ?? 'secondary';
+            
+            return [
+                $activity->id,
+                $activity->created_at->diffForHumans(),
+                $activity->causer ? $activity->causer->name : 'System',
+                $activity->description,
+                class_basename($activity->subject_type ?? ''),
+                '<span class="badge bg-' . $color . '">' . ucfirst($activity->event) . '</span>',
+            ];
+        });
+        
+        return response()->json([
+            'data' => $data,
+            'total' => $total,
+        ]);
+    }
 
-        $activities = $query->latest()->paginate(20)->withQueryString();
-
-        // For filter form options
-        $users = \App\Models\User::orderBy('name')->get();
-
-        // Build model options mapping shortName => fullClass
-        $rawModels = Activity::select('subject_type')->distinct()->pluck('subject_type')->filter()->values();
-        $modelOptions = collect();
-        foreach ($rawModels as $m) {
-            if (! $m) continue;
-            $short = class_basename($m);
-            // Avoid overwriting if multiple full classes share the same short name
-            if (! $modelOptions->has($short)) {
-                $modelOptions->put($short, $m);
-            }
-        }
-
-        return view('admin.activities.index', compact('activities', 'users', 'modelOptions'));
+    /**
+     * Export activities to Excel
+     */
+    public function export()
+    {
+        return Excel::download(new ActivityLogsExport, 'activity-logs-' . date('Y-m-d-His') . '.xlsx');
     }
 
     /**
@@ -194,9 +234,28 @@ class ActivityController extends Controller
             $query->where('log_type', $request->get('log_type'));
         }
 
+        if ($request->filled('date_from')) {
+            $query->whereDate('archived_at', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('archived_at', '<=', $request->get('date_to'));
+        }
+
         $archives = $query->paginate(20)->withQueryString();
 
         return view('admin.activities.archives', compact('archives'));
+    }
+
+    /**
+     * Export archived logs to Excel
+     */
+    public function exportArchives(Request $request)
+    {
+        $logType = $request->get('log_type');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $filename = 'activity-archives' . ($logType ? "-{$logType}" : '') . '-' . date('Y-m-d-His') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new ActivityLogArchivesExport($logType, $dateFrom, $dateTo), $filename);
     }
 
     /**
@@ -220,5 +279,87 @@ class ActivityController extends Controller
         $archive->delete();
 
         return back()->with('success', 'Log berhasil dipulihkan dari arsip.');
+    }
+
+    /**
+     * Permanently delete an archived activity
+     */
+    public function destroyArchive(ActivityLogArchive $archive)
+    {
+        $archive->delete();
+        return back()->with('success', 'Arsip berhasil dihapus.');
+    }
+
+    /**
+     * Bulk delete archives based on filters
+     */
+    public function bulkDeleteArchives(Request $request)
+    {
+        $request->validate([
+            'confirm' => 'required|in:yes',
+        ], [
+            'confirm.required' => 'Konfirmasi diperlukan.',
+            'confirm.in' => 'Konfirmasi tidak valid.',
+        ]);
+
+        $query = ActivityLogArchive::query();
+
+        if ($request->filled('log_type')) {
+            $query->where('log_type', $request->get('log_type'));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('archived_at', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('archived_at', '<=', $request->get('date_to'));
+        }
+
+        $count = (clone $query)->count();
+        $query->delete();
+
+        return back()->with('success', "Berhasil menghapus {$count} arsip sesuai filter.");
+    }
+
+    /**
+     * Bulk restore archives based on filters
+     */
+    public function bulkRestoreArchives(Request $request)
+    {
+        $request->validate([
+            'confirm' => 'required|in:yes',
+        ]);
+
+        $query = ActivityLogArchive::query();
+
+        if ($request->filled('log_type')) {
+            $query->where('log_type', $request->get('log_type'));
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('archived_at', '>=', $request->get('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('archived_at', '<=', $request->get('date_to'));
+        }
+
+        $archives = $query->get();
+        $count = 0;
+        foreach ($archives as $archive) {
+            if ($archive->activity_data) {
+                Activity::create([
+                    'description' => $archive->activity_data['description'] ?? null,
+                    'subject_type' => $archive->activity_data['subject_type'] ?? null,
+                    'subject_id' => $archive->activity_data['subject_id'] ?? null,
+                    'causer_type' => $archive->activity_data['causer_type'] ?? null,
+                    'causer_id' => $archive->activity_data['causer_id'] ?? null,
+                    'properties' => $archive->activity_data['properties'] ?? [],
+                    'batch_uuid' => $archive->activity_data['batch_uuid'] ?? null,
+                    'event' => $archive->activity_data['event'] ?? null,
+                ]);
+            }
+            $archive->delete();
+            $count++;
+        }
+
+        return back()->with('success', "Berhasil memulihkan {$count} arsip sesuai filter.");
     }
 }

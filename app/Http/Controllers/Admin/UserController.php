@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
+use App\Exports\UsersExport;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
@@ -15,8 +17,63 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('roles')->paginate(10);
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index-gridjs');
+    }
+
+    /**
+     * Get users data for Grid.js (AJAX)
+     */
+    public function getData(Request $request)
+    {
+        $query = User::with('roles');
+        
+        // Search
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('uid', 'like', "%{$search}%");
+            });
+        }
+        
+        // Pagination - Grid.js uses 0-based page indexing for server.url
+        $page = max(0, $request->get('page', 0));
+        $limit = $request->get('limit', 10);
+        $offset = $page * $limit;
+        
+        $total = $query->count();
+        $users = $query->skip($offset)->take($limit)->get();
+        
+        $data = $users->map(function($user) {
+            $roles = $user->roles->pluck('name')->map(function($role) {
+                $badgeClass = $role === 'super-admin' ? 'danger' : ($role === 'admin' ? 'primary' : 'secondary');
+                return '<span class="badge bg-' . $badgeClass . '">' . ucfirst(str_replace('-', ' ', $role)) . '</span>';
+            })->implode(' ');
+            
+            return [
+                $user->id,
+                $user->name,
+                $user->username ?: '-',
+                $user->email,
+                $roles,
+                $user->created_at->format('d M Y'),
+            ];
+        });
+        
+        return response()->json([
+            'data' => $data,
+            'total' => $total,
+        ]);
+    }
+
+    /**
+     * Export users to Excel
+     */
+    public function export()
+    {
+        return Excel::download(new UsersExport, 'users-' . date('Y-m-d-His') . '.xlsx');
     }
 
     /**
@@ -110,16 +167,19 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        // Prevent deleting super-admin users
+        if ($user->hasRole('super-admin')) {
+            return response()->json(['error' => 'Tidak dapat menghapus user super-admin'], 403);
+        }
+        
         // Prevent deleting the authenticated user
         if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'Tidak dapat menghapus user yang sedang login');
+            return response()->json(['error' => 'Tidak dapat menghapus user yang sedang login'], 403);
         }
 
         $user->delete();
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'User berhasil dihapus');
+        return response()->json(['success' => 'User berhasil dihapus']);
     }
 
     /**

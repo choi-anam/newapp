@@ -15,13 +15,6 @@
     </div>
 </div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle"></i> {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
     <!-- Filter -->
     <div class="row mb-4">
         <div class="col-12">
@@ -35,6 +28,14 @@
                                 <option value="manual" @selected(request('log_type') === 'manual')>Manual</option>
                                 <option value="scheduled" @selected(request('log_type') === 'scheduled')>Terjadwal</option>
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Dari Tanggal</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request('date_from') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_to" class="form-label">Sampai Tanggal</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request('date_to') }}">
                         </div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-primary btn-sm">
@@ -57,6 +58,31 @@
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
                         <span>Total: <strong>{{ $archives->total() }}</strong> arsip</span>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('admin.activities.archives-export', request()->only('log_type','date_from','date_to')) }}" class="btn btn-success btn-sm">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </a>
+                            <form action="{{ route('admin.activities.archives-bulk-restore') }}" method="POST" onsubmit="return confirm('Pulihkan semua arsip sesuai filter saat ini?')">
+                                @csrf
+                                <input type="hidden" name="log_type" value="{{ request('log_type') }}">
+                                <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                                <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                                <input type="hidden" name="confirm" value="yes">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Pulihkan Semua (Filter)
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.activities.archives-bulk-delete') }}" method="POST" onsubmit="return confirm('⚠️ PERHATIAN! Ini akan menghapus arsip sesuai filter saat ini dan tidak dapat dibatalkan. Lanjutkan?')">
+                                @csrf
+                                <input type="hidden" name="log_type" value="{{ request('log_type') }}">
+                                <input type="hidden" name="date_from" value="{{ request('date_from') }}">
+                                <input type="hidden" name="date_to" value="{{ request('date_to') }}">
+                                <input type="hidden" name="confirm" value="yes">
+                                <button type="submit" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash"></i> Hapus Arsip (Filter)
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -122,6 +148,13 @@
                                                 <button class="btn btn-xs btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#detailModal{{ $archive->id }}" title="Lihat Detail">
                                                     <i class="bi bi-eye"></i>
                                                 </button>
+                                                <form action="{{ route('admin.activities.archives-destroy', $archive) }}" method="POST" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('Hapus arsip ini secara permanen?')" title="Hapus Arsip">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
 

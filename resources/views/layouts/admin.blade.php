@@ -471,6 +471,27 @@
                     </a>
                 </div>
 
+                <div class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="bi bi-people"></i>
+                        <span>Users</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ route('admin.activities.index') }}" class="nav-link {{ request()->routeIs('admin.activities.index') ? 'active' : '' }}">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Activity Log</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ route('admin.activities.archives') }}" class="nav-link {{ request()->routeIs('admin.activities.archives') ? 'active' : '' }}">
+                        <i class="bi bi-archive"></i>
+                        <span>Archives Log</span>
+                    </a>
+                </div>
+
                 <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
 
                 <div style="padding: 0.75rem 1rem; color: rgba(255, 255, 255, 0.5); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
