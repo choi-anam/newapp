@@ -1,6 +1,6 @@
 # 📋 Dokumentasi Fitur Admin Panel & Activity Logging System
 
-**Last Updated:** November 28, 2025 (Landing Page & Online Users added)  
+**Last Updated:** November 29, 2025 (WebSocket Real-time Online Users)  
 **Laravel Version:** 12.40.1  
 **PHP Version:** 8.2.12
 
@@ -164,15 +164,87 @@ Activity otomatis direkam untuk:
 - Timestamp: created_at (waktu aksi)
 ```
 
-### 3. 🟢 Online Users Tracking
+### 3. 🟢 Online Users Tracking (Polling + Real-time)
 
-Menampilkan user yang aktif/terhubung baru-baru ini (default: 5 menit terakhir).
+Menampilkan user yang aktif/terhubung baru-baru ini (default: 5 menit terakhir) dengan 2 mekanisme:
 
-**Implementasi:**
+1. Fallback polling (HTTP fetch setiap 30 detik)
+2. Real-time push via WebSocket (Laravel Reverb + Laravel Echo)
+
+**Implementasi (Polling Dasar):**
 - Kolom baru `users.last_seen_at` (nullable timestamp, indexed)
 - Middleware global: `app/Http/Middleware/TrackUserActivity.php` → update `last_seen_at` setiap ≥60 detik per user untuk efisiensi.
 - Endpoint data JSON: `GET /admin/users-online-data` (method `UserController@onlineData`).
 - Dashboard card: menampilkan list user online dengan roles + waktu terakhir aktif.
+
+**Implementasi Real-time (WebSocket):**
+- Paket server: Laravel Reverb (`composer require laravel/reverb -W`)
+- Konfigurasi broadcasting ditambahkan / diperbarui di `config/broadcasting.php` dengan koneksi `reverb`:
+  ```php
+  'reverb' => [
+    'driver' => 'reverb',
+    'key' => env('REVERB_APP_KEY', 'local'),
+    'secret' => env('REVERB_APP_SECRET'),
+    'host' => env('REVERB_HOST', '127.0.0.1'),
+    'port' => env('REVERB_PORT', 8080),
+    'scheme' => env('REVERB_SCHEME', 'http'),
+    'apps' => [
+      [
+        'key' => env('REVERB_APP_KEY', 'local'),
+        'secret' => env('REVERB_APP_SECRET', 'secret'),
+        'id' => env('REVERB_APP_ID', 'app-id'),
+      ],
+    ],
+  ],
+  ```
+- Event broadcast: `app/Events/OnlineUsersUpdated.php` (implements `ShouldBroadcast`, channel publik `online-users`, nama event: `.OnlineUsersUpdated`).
+- Middleware memanggil event setelah update `last_seen_at` dan membangun snapshot user aktif: `User::where('last_seen_at', '>=', now()->subMinutes(5))`.
+- Frontend: inisialisasi Laravel Echo di `resources/js/bootstrap.js` menggunakan `laravel-echo` + dynamic load client Reverb dari CDN (karena paket npm `@laravel/reverb` belum tersedia).
+- Script inline lama di `dashboard.blade.php` dihapus agar tidak terjadi duplikasi subscription.
+- Fallback polling tetap ada jika WebSocket gagal (console akan menampilkan peringatan dan daftar tetap disegarkan tiap 30 detik).
+
+**File Tambahan/Diubah (Real-time):**
+- Event: `app/Events/OnlineUsersUpdated.php`
+- Middleware: `app/Http/Middleware/TrackUserActivity.php` (menambahkan broadcast)
+- JS Echo setup: `resources/js/bootstrap.js`
+- Config: `config/broadcasting.php` (menambahkan koneksi reverb jika belum ada)
+- View cleanup: `resources/views/admin/dashboard.blade.php` (hapus script Echo inline duplikat).
+
+**ENV yang Direkomendasikan:**
+```
+BROADCAST_DRIVER=reverb
+REVERB_APP_KEY=local
+REVERB_APP_SECRET=secret
+REVERB_APP_ID=app-id
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+```
+
+**Perintah Setup & Jalankan (Development):**
+```bash
+# Install server komponen Reverb
+composer require laravel/reverb -W
+php artisan reverb:install
+
+# Install client Echo
+npm install laravel-echo --save
+
+# Jalankan asset bundler
+npm run dev
+
+# Jalankan WebSocket server
+php artisan reverb:start
+```
+
+**Alur Real-time:**
+```
+User request (misal navigasi halaman) → Middleware update last_seen_at (throttle ≥60 detik) → Event OnlineUsersUpdated dibroadcast → Echo client menerima payload → DOM list online users diperbarui instan
+```
+
+**Fallback Strategy:**
+- Jika koneksi WebSocket gagal (Echo tidak terinisialisasi), polling HTTP tetap jalan setiap 30 detik.
+- Memastikan data tetap akurat sambil menunggu perbaikan koneksi real-time.
 
 **Logika Waktu Aktif:**
 ```php
@@ -198,9 +270,11 @@ if ($user->last_seen_at === null || $user->last_seen_at->diffInSeconds(now()) >=
 - Tidak menggunakan sesi tambahan.
 
 **Pengembangan Lanjutan (Opsional):**
-- Tambah konfigurasi interval (env/config)
-- Tambah status presence lebih detail (idle/active)
-- Tambah WebSocket untuk real-time instan.
+- Presence channel (autentikasi & daftar user otomatis)
+- Private channel untuk keamanan lebih tinggi
+- Status idle/away (menggunakan aktivitas DOM / timer)
+- Optimasi payload (hanya kirim delta perubahan, bukan snapshot penuh)
+- Server scaling (jalankan Reverb dengan supervisor / PM2 + reverse proxy)
 
 ---
 
