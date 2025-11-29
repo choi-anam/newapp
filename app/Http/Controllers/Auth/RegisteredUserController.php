@@ -47,8 +47,10 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        // Send verification email
+        $user->sendEmailVerificationNotification();
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('verification.notice')
+            ->with('status', 'Akun Anda telah dibuat! Email verifikasi telah dikirim ke ' . $user->email . '. Silakan verifikasi email Anda untuk melanjutkan.');
     }
 }
