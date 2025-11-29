@@ -7,6 +7,13 @@
 
     <div class="card-body p-4">
         <!-- Session Status -->
+        @if (session('status'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i> {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="bi bi-exclamation-circle"></i> Gagal masuk
@@ -57,7 +64,7 @@
 
             @if (Route::has('password.forgot'))
                 <div class="text-center mb-3">
-                    <a href="{{ route('password.forgot') }}" class="btn btn-link btn-sm text-decoration-none fw-semibold">
+                    <a href="{{ route('password.method') }}" class="btn btn-link btn-sm text-decoration-none fw-semibold">
                         <i class="bi bi-key-fill"></i> Lupa password?
                     </a>
                 </div>

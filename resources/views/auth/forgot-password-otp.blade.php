@@ -1,10 +1,10 @@
 <x-guest-layout>
-    <div class="auth-header-new">
+    <div class="auth-header-new otp-method-header">
+        <div class="method-badge">🔐 Kode OTP</div>
         <div class="header-icon">
             <i class="bi bi-shield-lock"></i>
         </div>
-        <h2 class="fw-bold mb-2">Lupa Password? 🔐</h2>
-        <p class="text-muted">Masukkan alamat email Anda dan kami akan mengirimkan instruksi untuk mereset password</p>
+        <h2 class="fw-bold mb-2">Reset Password via OTP 🛡️</h2>
     </div>
 
     <div class="card-body p-5">
@@ -66,23 +66,10 @@
 
         <hr class="my-4">
 
-        <!-- Alternative Methods -->
-        <div class="alternative-methods mb-3">
-            <p class="text-center text-muted small mb-3">
-                <strong>Atau pilih metode reset lainnya:</strong>
-            </p>
-            
-            <div class="d-grid gap-2">
-                <a href="{{ route('password.request') }}" class="btn btn-outline-primary py-2">
-                    <i class="bi bi-envelope-check"></i> Email Verification Link
-                </a>
-            </div>
-        </div>
-
         <div class="text-center">
-            <a href="{{ route('login') }}" class="d-flex align-items-center justify-content-center gap-2 text-decoration-none mt-3">
+            <a href="{{ route('password.method') }}" class="d-flex align-items-center justify-content-center gap-2 text-decoration-none mt-3">
                 <i class="bi bi-arrow-left"></i>
-                <span>Kembali ke login</span>
+                <span>Kembali ke Pilihan Metode</span>
             </a>
         </div>
     </div>
@@ -94,6 +81,22 @@
             padding: 3rem 2rem;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .otp-method-header {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+
+        .method-badge {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .header-icon {

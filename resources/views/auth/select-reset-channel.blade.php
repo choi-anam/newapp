@@ -21,6 +21,21 @@
             </div>
         @endif
 
+        @if (session('status'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill"></i> {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        <!-- Email & Channel Info -->
+        <div class="info-card mb-4">
+            <div class="info-row">
+                <span class="info-label"><i class="bi bi-envelope"></i> Email:</span>
+                <span class="info-value">{{ $email }}</span>
+            </div>
+        </div>
+
         <form method="POST" action="{{ route('password.send-otp') }}">
             @csrf
             <input type="hidden" name="email" value="{{ $email }}">
@@ -37,6 +52,9 @@
                                 class="channel-radio"
                                 {{ $loop->first ? 'checked' : '' }}
                             >
+                            <div class="channel-check">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
                             <div class="channel-body">
                                 <div class="channel-icon">{{ $channel['icon'] }}</div>
                                 <div class="channel-title">{{ $channel['name'] }}</div>
@@ -114,6 +132,38 @@
             line-height: 1.6;
         }
 
+        .info-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -131,6 +181,29 @@
             background-color: #fff;
         }
 
+        .channel-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s ease;
+        }
+
+        .channel-card input:checked ~ .channel-check {
+            opacity: 1;
+            transform: scale(1);
+        }
+
         .channel-card.active-option {
             cursor: pointer;
         }
@@ -142,20 +215,6 @@
             box-shadow: 0 8px 16px rgba(102, 126, 234, 0.15);
         }
 
-        .channel-radio {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-        }
-
-        .channel-card input:checked {
-            accent-color: #667eea;
-        }
-
         .channel-card input:checked ~ .channel-body {
             color: #667eea;
         }
@@ -164,9 +223,29 @@
             transform: scale(1.15);
         }
 
+        .channel-card input:checked {
+            accent-color: #667eea;
+        }
+
+        .channel-card input:checked {
+            border-color: #667eea !important;
+            background-color: #f0f3ff !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+
         .channel-body {
             pointer-events: none;
             transition: all 0.3s ease;
+        }
+
+        .channel-radio {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
         }
 
         .channel-icon {
@@ -258,6 +337,12 @@
                 border-color: #667eea;
             }
 
+            .channel-card input:checked {
+                border-color: #667eea !important;
+                background-color: #334455 !important;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+            }
+
             .channel-title {
                 color: #e0e0e0;
             }
@@ -280,6 +365,23 @@
                 background-color: #1a3a52;
                 border-left-color: #0d6efd;
                 color: #86b3d5;
+            }
+
+            .info-card {
+                background-color: #2d2d2d;
+                border-color: #444;
+            }
+
+            .info-label {
+                color: #999;
+            }
+
+            .info-value {
+                color: #e0e0e0;
+            }
+
+            .info-row {
+                border-bottom-color: #444;
             }
         }
     </style>

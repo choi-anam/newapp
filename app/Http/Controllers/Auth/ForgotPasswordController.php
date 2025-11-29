@@ -16,7 +16,7 @@ class ForgotPasswordController extends Controller
      */
     public function create(): View
     {
-        return view('auth.forgot-password');
+        return view('auth.forgot-password-otp');
     }
 
     /**
@@ -73,9 +73,21 @@ class ForgotPasswordController extends Controller
         $sent = PasswordResetService::sendReset($user, $request->channel, $request->email);
 
         if (!$sent) {
+            $errorMsg = 'Gagal mengirim OTP. ';
+            
+            if ($request->channel === 'telegram' && !$user->telegram_id) {
+                $errorMsg .= 'Anda belum mengatur Telegram ID. Silakan update profile Anda terlebih dahulu.';
+            } elseif ($request->channel === 'telegram') {
+                $errorMsg .= 'Telegram ID Anda mungkin salah atau bot tidak dapat menjangkau akun Telegram Anda.';
+            } elseif ($request->channel === 'whatsapp' && !$user->phone) {
+                $errorMsg .= 'Anda belum mengatur nomor telepon. Silakan update profile Anda terlebih dahulu.';
+            } else {
+                $errorMsg .= 'Silakan coba lagi atau hubungi support.';
+            }
+            
             return back()
                 ->withInput($request->only('email', 'channel'))
-                ->withErrors(['channel' => 'Gagal mengirim OTP. Silakan coba lagi.']);
+                ->withErrors(['channel' => $errorMsg]);
         }
 
         return redirect()->route('password.otp.verify', [

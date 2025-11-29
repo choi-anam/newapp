@@ -66,7 +66,7 @@ class VerifyPasswordResetOtpController extends Controller
                 ->withErrors(['otp' => $result['message']]);
         }
 
-        return redirect()->route('login')->with('status', 'Password berhasil direset! Silakan login dengan password baru Anda.');
+        return redirect()->route('login')->with('status', '✅ Password Anda berhasil direset! Silakan login dengan password baru.');
     }
 
     /**

@@ -43,9 +43,15 @@ class PasswordResetService
             if ($channel === 'email') {
                 $user->notify(new SendPasswordResetOtpNotification($otp, $channel, $email));
             } elseif ($channel === 'telegram') {
-                self::sendTelegramMessage($user, $otp);
+                if (!self::sendTelegramMessage($user, $otp)) {
+                    Log::error('Failed to send Telegram OTP to user ' . $user->id . ' - Chat ID: ' . ($user->telegram_id ?: 'NONE'));
+                    return false;
+                }
             } elseif ($channel === 'whatsapp') {
-                self::sendWhatsAppMessage($user, $otp);
+                if (!self::sendWhatsAppMessage($user, $otp)) {
+                    Log::error('Failed to send WhatsApp OTP to user ' . $user->id);
+                    return false;
+                }
             }
 
             return true;
@@ -113,11 +119,18 @@ class PasswordResetService
 
         try {
             $botToken = config('services.telegram.bot_token');
+            
+            if (!$botToken) {
+                Log::warning('Telegram bot token not configured');
+                return false;
+            }
+
             $chatId = $user->telegram_id;
 
-            $message = "Kode OTP untuk reset password Anda: **{$otp}**\n\n";
-            $message .= "Kode ini berlaku selama 15 menit.\n";
-            $message .= "Jika Anda tidak meminta reset password, abaikan pesan ini.";
+            $message = "🔐 *Kode OTP Reset Password*\n\n";
+            $message .= "Kode OTP Anda: `{$otp}`\n\n";
+            $message .= "⏱️ Berlaku selama 15 menit\n";
+            $message .= "⚠️ Jika Anda tidak meminta reset password, abaikan pesan ini.";
 
             $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
             $payload = [
@@ -126,8 +139,15 @@ class PasswordResetService
                 'parse_mode' => 'Markdown',
             ];
 
-            $response = Http::post($url, $payload);
-            return $response->successful();
+            $response = Http::timeout(10)->post($url, $payload);
+            
+            if ($response->successful()) {
+                Log::info('Telegram message sent to user: ' . $user->id);
+                return true;
+            } else {
+                Log::error('Telegram API error: ' . $response->body());
+                return false;
+            }
         } catch (\Exception $e) {
             Log::error('Telegram message send failed: ' . $e->getMessage());
             return false;

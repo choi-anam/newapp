@@ -1,10 +1,10 @@
 <x-guest-layout>
-    <div class="auth-header-new">
+    <div class="auth-header-new email-method-header">
+        <div class="method-badge">📧 Email Link</div>
         <div class="header-icon">
             <i class="bi bi-envelope-open-heart"></i>
         </div>
-        <h2 class="fw-bold mb-2">Lupa Password? 🔐</h2>
-        <p class="text-muted">Kami akan mengirimkan link reset password ke email Anda</p>
+        <h2 class="fw-bold mb-2">Reset Password via Email ✉️</h2>
     </div>
 
     <div class="card-body p-5">
@@ -64,19 +64,11 @@
             <button type="submit" id="submitBtn" class="btn btn-primary d-grid w-100 mb-3 py-2 fw-semibold" disabled>
                 <i class="bi bi-send"></i> Kirim Link Reset Password
             </button>
-
-            <div class="divider my-4">
-                <span class="divider-text">atau</span>
-            </div>
-
-            <a href="{{ route('password.forgot') }}" class="btn btn-outline-secondary d-grid w-100 fw-semibold">
-                <i class="bi bi-shield-check"></i> Gunakan Kode OTP
-            </a>
         </form>
     </div>
 
     <div class="auth-footer">
-        <p><a href="{{ route('login') }}" class="auth-link"><i class="bi bi-arrow-left"></i> Kembali ke Login</a></p>
+        <p><a href="{{ route('password.method') }}" class="auth-link"><i class="bi bi-arrow-left"></i> Kembali ke Pilihan Metode</a></p>
     </div>
 
     <style>
@@ -86,6 +78,23 @@
             padding: 3rem 2rem;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .email-method-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .method-badge {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .header-icon {
