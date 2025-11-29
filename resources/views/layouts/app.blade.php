@@ -19,6 +19,8 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- Bootstrap Icons -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+        <!-- Dark Mode CSS -->
+        <link rel="stylesheet" href="{{ asset('css/dark-mode.css') }}">
         
         <style>
             :root {
@@ -291,6 +293,9 @@
                                     </a>
                                 </li>
                             @endif
+                            <li class="nav-item me-2">
+                                <x-theme-toggle />
+                            </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-person-circle"></i> {{ auth()->user()->name }}
