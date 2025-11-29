@@ -55,10 +55,10 @@
                 <i class="bi bi-box-arrow-in-right"></i> Masuk
             </button>
 
-            @if (Route::has('password.request'))
+            @if (Route::has('password.forgot'))
                 <div class="text-center mb-3">
-                    <a href="{{ route('password.request') }}" class="auth-link small">
-                        Lupa password?
+                    <a href="{{ route('password.forgot') }}" class="btn btn-link btn-sm text-decoration-none fw-semibold">
+                        <i class="bi bi-key-fill"></i> Lupa password?
                     </a>
                 </div>
             @endif

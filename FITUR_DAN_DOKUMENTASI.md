@@ -1,6 +1,6 @@
 # 📋 Dokumentasi Fitur Admin Panel & Activity Logging System
 
-**Last Updated:** November 29, 2025 (WebSocket Real-time Online Users)  
+**Last Updated:** November 29, 2025 (Password Reset dengan OTP & Multi-Channel)  
 **Laravel Version:** 12.40.1  
 **PHP Version:** 8.2.12
 
@@ -9,24 +9,28 @@
 ## 📚 Daftar Isi
 
 1. [Overview Sistem](#overview-sistem)
-2. [Fitur Admin Panel](#fitur-admin-panel)
-3. [Fitur Activity Logging](#fitur-activity-logging)
-4. [Fitur Archive & Cleanup](#fitur-archive--cleanup)
-5. [Fitur Export Excel](#fitur-export-excel)
-6. [Grid.js Integration](#gridjs-integration)
-7. [File & Struktur](#file--struktur)
-8. [Routes](#routes)
-9. [Database Schema](#database-schema)
-10. [Artisan Commands](#artisan-commands)
+2. [Fitur Autentikasi](#fitur-autentikasi)
+3. [Fitur Admin Panel](#fitur-admin-panel)
+4. [Fitur Activity Logging](#fitur-activity-logging)
+5. [Fitur Archive & Cleanup](#fitur-archive--cleanup)
+6. [Fitur Export Excel](#fitur-export-excel)
+7. [Grid.js Integration](#gridjs-integration)
+8. [File & Struktur](#file--struktur)
+9. [Routes](#routes)
+10. [Database Schema](#database-schema)
+11. [Artisan Commands](#artisan-commands)
 
 ---
 
 ## Overview Sistem
 
-Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan Spatie), **Activity Logging** lengkap, **Export Excel**, dan **Grid.js** untuk tracking semua aktivitas user di admin panel.
+Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan Spatie), **Activity Logging** lengkap, **Export Excel**, **Grid.js**, dan **Password Reset dengan OTP** untuk tracking semua aktivitas user di admin panel.
 
 ### Penambahan Terbaru:
-- 🌐 Landing page baru (Bootstrap 5) di `/` dengan hero, fitur, statistik, dan tautan GitHub.
+- 📱 Kolom **phone** dan **telegram_id** pada user
+- 🔐 Fitur **Lupa Password dengan OTP** (Email, Telegram, WhatsApp)
+- 📨 User dapat memilih channel mana untuk menerima kode reset
+- ⏰ OTP berlaku 15 menit dengan auto-cleanup
 - 🟢 Fitur "Online Users" dengan tracking `last_seen_at` otomatis via middleware global.
 - 🔄 Dashboard menampilkan daftar user aktif (terlihat dalam 5 menit terakhir) auto-refresh.
 
@@ -39,10 +43,155 @@ Aplikasi Laravel 12 dengan sistem manajemen **Role & Permission** (menggunakan S
 - **Bootstrap 5.3** - UI Framework
 - **SQLite** - Database
 - **PWA** - Progressive Web App Support
+- **Telegram Bot API** - Send OTP via Telegram
+- **Twilio WhatsApp** - Send OTP via WhatsApp
 
 ---
 
-## Fitur Admin Panel
+## Fitur Autentikasi
+
+### 1. 🔐 Lupa Password dengan OTP & Multi-Channel
+
+**URL Utama:** `http://127.0.0.1:8000/forgot-password-otp`
+
+#### Alur Proses:
+1. User masuk email → system cari user
+2. Pilih channel (Email/Telegram/WhatsApp)
+3. Sistem generate OTP 6 digit
+4. User terima OTP di channel pilihan
+5. User input OTP + password baru
+6. Sistem verifikasi OTP dan reset password
+
+#### Fitur Detail:
+
+**a) Form Lupa Password**
+- URL: `GET /forgot-password-otp`
+- Method: `POST /forgot-password-otp` (route: `password.forgot.store`)
+- Input: email
+- Output: Halaman pilih channel (jika email ditemukan) atau error
+
+**b) Pilih Channel Reset**
+- Views: `resources/views/auth/select-reset-channel.blade.php`
+- Channel yang tersedia (conditional):
+  - ✅ **Email** - Selalu tersedia jika user punya email
+  - ✅ **Telegram** - Tersedia jika user punya `telegram_id` + bot token dikonfigurasi
+  - ✅ **WhatsApp** - Tersedia jika user punya `phone` + Twilio dikonfigurasi
+- Channel tidak tersedia di-disable (opacity 50%)
+
+**c) Generate & Kirim OTP**
+- Endpoint: `POST /send-reset-otp` (route: `password.send-otp`)
+- OTP: 6 digit random, generated via `PasswordResetService::generateOtp()`
+- Storage: `password_reset_otps` table
+- Expire: 15 menit dari sekarang
+- Channel delivery:
+  - **Email**: Via Laravel Mail Notification
+  - **Telegram**: Via Telegram Bot API
+  - **WhatsApp**: Via Twilio API
+
+**d) Verifikasi OTP & Reset Password**
+- URL: `GET /verify-reset-otp?email=...&channel=...`
+- Method: `POST /verify-reset-otp` (route: `password.otp.store`)
+- Validasi OTP:
+  - OTP harus 6 digit
+  - OTP belum digunakan (`is_used = false`)
+  - OTP belum expired (`expires_at > now()`)
+  - OTP milik user email yang tepat
+- Reset Password:
+  - Password di-hash dan disimpan
+  - OTP di-mark sebagai used
+  - Semua OTP lain user untuk email itu di-delete
+  - User bisa login dengan password baru
+
+**e) Resend OTP**
+- Endpoint: `POST /resend-reset-otp` (route: `password.otp.resend`)
+- Input: email, channel
+- Fungsi: Delete OTP lama → Generate OTP baru → Kirim ke channel
+- Throttle: Tidak ada limit (bisa implement jika perlu)
+
+#### Konfigurasi Required:
+
+**Email (Laravel Mail):**
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=465
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS=noreply@example.com
+MAIL_FROM_NAME="Your App Name"
+```
+
+**Telegram Bot:**
+```env
+SERVICES_TELEGRAM_BOT_TOKEN=your_bot_token_here
+```
+Cara dapat token: Buat bot via BotFather di Telegram (@BotFather)
+
+**WhatsApp via Twilio:**
+```env
+SERVICES_TWILIO_ACCOUNT_SID=your_account_sid
+SERVICES_TWILIO_AUTH_TOKEN=your_auth_token
+SERVICES_TWILIO_PHONE_NUMBER=+1234567890
+```
+Sign up: https://www.twilio.com
+
+#### File Terkait:
+- Controller: `app/Http/Controllers/Auth/ForgotPasswordController.php`
+- Controller: `app/Http/Controllers/Auth/VerifyPasswordResetOtpController.php`
+- Service: `app/Services/PasswordResetService.php`
+- Model: `app/Models/PasswordResetOtp.php`
+- Notification: `app/Notifications/SendPasswordResetOtpNotification.php`
+- Migration: `database/migrations/2025_11_29_000002_create_password_reset_otps_table.php`
+- Views: 
+  - `resources/views/auth/forgot-password-otp.blade.php`
+  - `resources/views/auth/select-reset-channel.blade.php`
+  - `resources/views/auth/verify-otp.blade.php`
+
+#### Database Schema:
+
+```sql
+password_reset_otps:
+  - id (PK)
+  - user_id (FK) - user yang request reset
+  - email (string) - email user saat reset
+  - otp (string, 6 char) - kode OTP
+  - channel (enum: email/telegram/whatsapp) - channel kirim
+  - expires_at (timestamp) - expiration time (now + 15 min)
+  - is_used (boolean, default: false) - sudah digunakan?
+  - created_at, updated_at
+```
+
+#### Routes:
+```
+GET    /forgot-password-otp                 - Form lupa password
+POST   /forgot-password-otp                 - Submit email & get channels
+POST   /send-reset-otp                      - Kirim OTP ke channel
+GET    /verify-reset-otp?email=...&channel=...  - Form verifikasi OTP
+POST   /verify-reset-otp                    - Verifikasi OTP & reset password
+POST   /resend-reset-otp                    - Minta ulang OTP
+```
+
+#### Security Measures:
+- ✅ OTP di-hash (opsional: bisa di-hash untuk extra security)
+- ✅ OTP expire otomatis setelah 15 menit
+- ✅ OTP hanya bisa digunakan sekali (`is_used` flag)
+- ✅ Password di-hash sebelum disimpan
+- ✅ Rate limiting bisa ditambah di middleware
+- ✅ CSRF protection via @csrf
+- ✅ Validation pada semua input
+
+#### TODO (Optional Enhancements):
+- [ ] Add rate limiting (max 5 OTP requests per 15 min)
+- [ ] Add IP logging untuk security audit
+- [ ] SMS via Amazon SNS atau Vonage (Nexmo)
+- [ ] OTP verification via 2FA apps (Google Authenticator)
+- [ ] Backup codes untuk emergency access
+- [ ] Email notification jika password berhasil direset
+
+---
+
+
 
 ### 1. 👥 Manajemen Roles
 
@@ -550,21 +699,39 @@ php artisan logs:cleanup --days=365 --force
 
 ## File & Struktur
 
-### Models Baru:
+### Models:
 ```
 app/Models/
+├── User.php (dengan LogsActivity trait + phone & telegram_id)
+├── PasswordResetOtp.php (Password reset OTP management - NEW)
 ├── ActivityLogArchive.php (Activity archive)
-└── User.php (dengan LogsActivity trait)
+└── ActivityLogSetting.php (Activity logging settings)
 ```
 
 ### Controllers:
 ```
+app/Http/Controllers/Auth/ (NEW - Forgot Password OTP)
+├── ForgotPasswordController.php
+└── VerifyPasswordResetOtpController.php
+
 app/Http/Controllers/Admin/
 ├── RoleController.php
 ├── PermissionController.php
 ├── UserController.php
 ├── ActivityController.php
 └── ActivityLogSettingController.php
+```
+
+### Services:
+```
+app/Services/
+└── PasswordResetService.php (Handle OTP generation, sending, verification - NEW)
+```
+
+### Notifications:
+```
+app/Notifications/
+└── SendPasswordResetOtpNotification.php (Send reset OTP via email - NEW)
 ```
 
 ### Commands:
@@ -582,6 +749,12 @@ app/Observers/
 
 ### Views:
 ```
+resources/views/auth/ (NEW - Forgot Password OTP)
+├── forgot-password-otp.blade.php (Form lupa password)
+├── select-reset-channel.blade.php (Pilih channel OTP)
+├── verify-otp.blade.php (Verifikasi OTP & reset)
+└── login.blade.php (Updated dengan link forgot-password-otp)
+
 resources/views/admin/
 ├── roles/ (index, create, edit, show)
 ├── permissions/ (index, create, edit, show)
@@ -610,12 +783,31 @@ database/migrations/
 ├── 2025_11_26_223630_create_permission_tables.php (Spatie)
 ├── 2025_11_26_221846_create_activity_log_table.php (Spatie)
 ├── 2025_11_26_224323_create_activity_log_settings_table.php
-└── 2025_11_26_225837_create_activity_log_archives_table.php
+├── 2025_11_26_225837_create_activity_log_archives_table.php
+├── 2025_11_29_000001_add_phone_and_telegram_to_users_table.php (NEW: Add phone & telegram_id)
+├── 2025_11_29_000002_create_password_reset_otps_table.php (NEW: Password reset OTP)
+└── 2025_11_29_000003_update_password_reset_tokens_table.php (NEW: Add channel column)
 ```
 
 ---
 
 ## Routes
+
+### Auth Routes (Forgot Password - OTP Based):
+```
+GET    /forgot-password-otp               - Form lupa password
+POST   /forgot-password-otp               - Submit email & show channel selection (password.forgot.store)
+POST   /send-reset-otp                    - Send OTP ke channel pilihan (password.send-otp)
+GET    /verify-reset-otp                  - Form verifikasi OTP (password.otp.verify)
+POST   /verify-reset-otp                  - Verifikasi OTP & reset password (password.otp.store)
+POST   /resend-reset-otp                  - Minta ulang OTP (password.otp.resend)
+
+Legacy Email-based (masih tersedia):
+GET    /forgot-password                   - Form lupa password lama
+POST   /forgot-password                   - Send reset link (password.email)
+GET    /reset-password/{token}            - Form reset via token (password.reset)
+POST   /reset-password                    - Update password (password.store)
+```
 
 ### Role Routes:
 ```
@@ -690,9 +882,13 @@ GET    /admin/users-export          - Export users (admin.users.export)
 - id
 - name
 - email
-- email_verified_at
+- username (string) - unique username
+- uid (string, unique) - unique identifier
+- phone (string, nullable) - nomor telepon user
+- telegram_id (string, nullable) - Telegram user ID untuk OTP
+- email_verified_at (timestamp, nullable)
 - password
-- password_reset_token
+- remember_token
 - last_seen_at (timestamp, nullable, indexed) -- tracking user activity presence
 - created_at, updated_at
 ```

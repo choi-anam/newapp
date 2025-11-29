@@ -4,11 +4,13 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\VerifyPasswordResetOtpController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -22,6 +24,7 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // Legacy password reset (token-based)
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -33,6 +36,25 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // New OTP-based password reset
+    Route::get('forgot-password-otp', [ForgotPasswordController::class, 'create'])
+        ->name('password.forgot');
+
+    Route::post('forgot-password-otp', [ForgotPasswordController::class, 'store'])
+        ->name('password.forgot.store');
+
+    Route::post('send-reset-otp', [ForgotPasswordController::class, 'sendOtp'])
+        ->name('password.send-otp');
+
+    Route::get('verify-reset-otp', [VerifyPasswordResetOtpController::class, 'create'])
+        ->name('password.otp.verify');
+
+    Route::post('verify-reset-otp', [VerifyPasswordResetOtpController::class, 'store'])
+        ->name('password.otp.store');
+
+    Route::post('resend-reset-otp', [VerifyPasswordResetOtpController::class, 'resend'])
+        ->name('password.otp.resend');
 });
 
 Route::middleware('auth')->group(function () {

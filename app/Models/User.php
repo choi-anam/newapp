@@ -25,6 +25,8 @@ class User extends Authenticatable
         'username',
         'uid',
         'email',
+        'phone',
+        'telegram_id',
         'password',
     ];
 
@@ -44,7 +46,7 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'username', 'uid', 'email'])
+            ->logOnly(['name', 'username', 'uid', 'email', 'phone', 'telegram_id'])
             ->useLogName('user')
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
@@ -62,5 +64,13 @@ class User extends Authenticatable
             'last_seen_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Relationship: Password Reset OTPs
+     */
+    public function passwordResetOtps()
+    {
+        return $this->hasMany(PasswordResetOtp::class);
     }
 }

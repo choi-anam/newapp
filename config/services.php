@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'telegram' => [
+        'bot_token' => env('SERVICES_TELEGRAM_BOT_TOKEN'),
+    ],
+
+    'twilio' => [
+        'account_sid' => env('SERVICES_TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('SERVICES_TWILIO_AUTH_TOKEN'),
+        'phone_number' => env('SERVICES_TWILIO_PHONE_NUMBER'),
+    ],
+
+    'whatsapp' => [
+        'api_key' => env('SERVICES_WHATSAPP_API_KEY'),
+        'phone_number_id' => env('SERVICES_WHATSAPP_PHONE_NUMBER_ID'),
+    ],
+
 ];
