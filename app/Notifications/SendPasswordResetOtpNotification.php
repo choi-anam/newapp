@@ -2,15 +2,11 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SendPasswordResetOtpNotification extends Notification implements ShouldQueue
+class SendPasswordResetOtpNotification extends Notification
 {
-    use Queueable;
-
     public string $otp;
     public string $channel;
     public string $email;
@@ -46,16 +42,22 @@ class SendPasswordResetOtpNotification extends Notification implements ShouldQue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Reset Password OTP')
-            ->line('Anda meminta untuk mereset password akun Anda.')
+            ->subject('Reset Password OTP - Kode: ' . $this->otp)
+            ->greeting('Halo!')
+            ->line('Anda telah meminta untuk mereset password akun Anda.')
+            ->line('')
             ->line('Gunakan kode OTP di bawah ini untuk melanjutkan:')
             ->line('')
-            ->line('**' . $this->otp . '**')
+            ->line('━━━━━━━━━━━━━━━━━━━━━━━━')
+            ->line('**Kode OTP: ' . $this->otp . '**')
+            ->line('━━━━━━━━━━━━━━━━━━━━━━━━')
             ->line('')
-            ->line('Kode ini berlaku selama 15 menit.')
-            ->line('Jika Anda tidak meminta reset password, abaikan email ini.')
-            ->action('Reset Password', route('password.otp.verify', ['email' => $this->email]))
-            ->line('Terima kasih telah menggunakan aplikasi kami!');
+            ->line('⏱️ Kode ini berlaku selama 15 menit.')
+            ->line('')
+            ->action('Reset Password Sekarang', route('password.otp.verify', ['email' => $this->email, 'channel' => $this->channel]))
+            ->line('')
+            ->line('⚠️ Jika Anda tidak meminta reset password, abaikan email ini atau hubungi support kami.')
+            ->salutation('Salam hormat, Tim ' . config('app.name'));
     }
 
     /**
