@@ -9,9 +9,11 @@
         <i class="bi bi-key"></i>
         Manajemen Permissions
     </h1>
-    <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Tambah Permission Baru
-    </a>
+    @can('create permissions')
+        <a href="{{ route('admin.permissions.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tambah Permission Baru
+        </a>
+    @endcan
 </div>
 
 <div class="card">
@@ -52,19 +54,23 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="action-buttons">
-                                        <a href="{{ route('admin.permissions.edit', $permission) }}" class="btn btn-sm btn-warning" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
                                         <a href="{{ route('admin.permissions.show', $permission) }}" class="btn btn-sm btn-info" title="Detail">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" style="display: inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin ingin menghapus permission ini?')">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        @can('update permissions')
+                                            <a href="{{ route('admin.permissions.edit', $permission) }}" class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        @endcan
+                                        @can('delete permissions')
+                                            <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin ingin menghapus permission ini?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -90,7 +96,11 @@
         @else
             <div class="text-center py-5">
                 <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                <p class="text-muted-sm mt-3">Belum ada data permissions. <a href="{{ route('admin.permissions.create') }}">Buat permission baru</a></p>
+                <p class="text-muted-sm mt-3">Belum ada data permissions. 
+                    @can('create permissions')
+                        <a href="{{ route('admin.permissions.create') }}">Buat permission baru</a>
+                    @endcan
+                </p>
             </div>
         @endif
     </div>

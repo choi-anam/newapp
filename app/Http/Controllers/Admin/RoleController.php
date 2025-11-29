@@ -14,6 +14,11 @@ class RoleController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        if (!$user->can('view roles')) {
+            abort(403, 'Unauthorized - You do not have permission to view roles.');
+        }
+
         $roles = Role::with('permissions')->paginate(10);
         return view('admin.roles.index', compact('roles'));
     }
@@ -23,6 +28,11 @@ class RoleController extends Controller
      */
     public function create()
     {
+        $user = auth()->user();
+        if (!$user->can('create roles')) {
+            abort(403, 'Unauthorized - You do not have permission to create roles.');
+        }
+
         $permissions = Permission::all();
         return view('admin.roles.create', compact('permissions'));
     }
@@ -32,6 +42,11 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if (!$user->can('create roles')) {
+            abort(403, 'Unauthorized - You do not have permission to create roles.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|unique:roles|max:255',
             'description' => 'nullable|string|max:500',
@@ -59,6 +74,11 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
+        $user = auth()->user();
+        if (!$user->can('view roles')) {
+            abort(403, 'Unauthorized - You do not have permission to view roles.');
+        }
+
         $role->load('permissions');
         return view('admin.roles.show', compact('role'));
     }
@@ -68,6 +88,11 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
+        $user = auth()->user();
+        if (!$user->can('update roles')) {
+            abort(403, 'Unauthorized - You do not have permission to edit roles.');
+        }
+
         $permissions = Permission::all();
         $role->load('permissions');
         return view('admin.roles.edit', compact('role', 'permissions'));
@@ -78,6 +103,11 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        $user = auth()->user();
+        if (!$user->can('update roles')) {
+            abort(403, 'Unauthorized - You do not have permission to update roles.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
             'description' => 'nullable|string|max:500',
@@ -109,6 +139,11 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        $user = auth()->user();
+        if (!$user->can('delete roles')) {
+            abort(403, 'Unauthorized - You do not have permission to delete roles.');
+        }
+
         if ($role->name === 'super-admin') {
             return back()->with('error', 'Tidak bisa menghapus role super-admin.');
         }

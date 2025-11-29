@@ -21,22 +21,22 @@ class RolePermissionSeeder extends Seeder
             'view-dashboard' => 'Melihat halaman dashboard admin',
 
             // Role Management
-            'create-role' => 'Membuat role baru',
-            'read-role' => 'Melihat daftar role',
-            'update-role' => 'Mengubah role',
-            'delete-role' => 'Menghapus role',
+            'view roles' => 'Melihat daftar role',
+            'create roles' => 'Membuat role baru',
+            'update roles' => 'Mengubah role',
+            'delete roles' => 'Menghapus role',
 
             // Permission Management
-            'create-permission' => 'Membuat permission baru',
-            'read-permission' => 'Melihat daftar permission',
-            'update-permission' => 'Mengubah permission',
-            'delete-permission' => 'Menghapus permission',
+            'view permissions' => 'Melihat daftar permission',
+            'create permissions' => 'Membuat permission baru',
+            'update permissions' => 'Mengubah permission',
+            'delete permissions' => 'Menghapus permission',
 
             // User Management
-            'create-user' => 'Membuat user baru',
-            'read-user' => 'Melihat daftar user',
-            'update-user' => 'Mengubah user',
-            'delete-user' => 'Menghapus user',
+            'view users' => 'Melihat daftar user',
+            'create users' => 'Membuat user baru',
+            'update users' => 'Mengubah user',
+            'delete users' => 'Menghapus user',
         ];
 
         foreach ($permissions as $name => $description) {
@@ -64,18 +64,9 @@ class RolePermissionSeeder extends Seeder
 
         $adminPermissions = Permission::whereIn('name', [
             'view-dashboard',
-            'create-role',
-            'read-role',
-            'update-role',
-            'delete-role',
-            'create-permission',
-            'read-permission',
-            'update-permission',
-            'delete-permission',
-            'create-user',
-            'read-user',
-            'update-user',
-            'delete-user',
+            'view roles',
+            'view permissions',
+            'view users',
         ])->get();
 
         $admin = Role::firstOrCreate(['name' => 'admin']);
@@ -83,7 +74,7 @@ class RolePermissionSeeder extends Seeder
 
         $editorPermissions = Permission::whereIn('name', [
             'view-dashboard',
-            'read-user',
+            'view users',
         ])->get();
 
         $editor = Role::firstOrCreate(['name' => 'editor']);

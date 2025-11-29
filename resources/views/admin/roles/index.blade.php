@@ -9,9 +9,11 @@
         <i class="bi bi-person-badge"></i>
         Manajemen Roles
     </h1>
-    <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Tambah Role Baru
-    </a>
+    @can('create roles')
+        <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tambah Role Baru
+        </a>
+    @endcan
 </div>
 
 <div class="card">
@@ -60,21 +62,25 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="action-buttons">
-                                        <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-sm btn-warning" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
                                         <a href="{{ route('admin.roles.show', $role) }}" class="btn btn-sm btn-info" title="Detail">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        @if($role->name !== 'super-admin')
-                                            <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin ingin menghapus role ini?')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        @endif
+                                        @can('update roles')
+                                            <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        @endcan
+                                        @can('delete roles')
+                                            @if($role->name !== 'super-admin')
+                                                <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" style="display: inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin ingin menghapus role ini?')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -100,7 +106,11 @@
         @else
             <div class="text-center py-5">
                 <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                <p class="text-muted-sm mt-3">Belum ada data roles. <a href="{{ route('admin.roles.create') }}">Buat role baru</a></p>
+                <p class="text-muted-sm mt-3">Belum ada data roles. 
+                    @can('create roles')
+                        <a href="{{ route('admin.roles.create') }}">Buat role baru</a>
+                    @endcan
+                </p>
             </div>
         @endif
     </div>

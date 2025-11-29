@@ -60,18 +60,22 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Edit
-                    </a>
-                    @if($role->name !== 'super-admin')
-                        <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" style="display: inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus role ini?')">
-                                <i class="bi bi-trash"></i> Hapus
-                            </button>
-                        </form>
-                    @endif
+                    @can('update roles')
+                        <a href="{{ route('admin.roles.edit', $role) }}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    @endcan
+                    @can('delete roles')
+                        @if($role->name !== 'super-admin')
+                            <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" style="display: inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus role ini?')">
+                                    <i class="bi bi-trash"></i> Hapus
+                                </button>
+                            </form>
+                        @endif
+                    @endcan
                 </div>
             </div>
         </div>

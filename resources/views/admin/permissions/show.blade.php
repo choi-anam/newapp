@@ -32,16 +32,20 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="{{ route('admin.permissions.edit', $permission) }}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Edit
-                    </a>
-                    <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" style="display: inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus permission ini?')">
-                            <i class="bi bi-trash"></i> Hapus
-                        </button>
-                    </form>
+                    @can('update permissions')
+                        <a href="{{ route('admin.permissions.edit', $permission) }}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    @endcan
+                    @can('delete permissions')
+                        <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" style="display: inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus permission ini?')">
+                                <i class="bi bi-trash"></i> Hapus
+                            </button>
+                        </form>
+                    @endcan
                 </div>
             </div>
         </div>

@@ -13,6 +13,11 @@ class PermissionController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        if (!$user->can('view permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to view permissions.');
+        }
+
         $permissions = Permission::paginate(15);
         return view('admin.permissions.index', compact('permissions'));
     }
@@ -22,6 +27,11 @@ class PermissionController extends Controller
      */
     public function create()
     {
+        $user = auth()->user();
+        if (!$user->can('create permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to create permissions.');
+        }
+
         return view('admin.permissions.create');
     }
 
@@ -30,6 +40,11 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
+        $user = auth()->user();
+        if (!$user->can('create permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to create permissions.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|unique:permissions|max:255',
             'description' => 'nullable|string|max:500',
@@ -46,6 +61,11 @@ class PermissionController extends Controller
      */
     public function show(Permission $permission)
     {
+        $user = auth()->user();
+        if (!$user->can('view permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to view permissions.');
+        }
+
         return view('admin.permissions.show', compact('permission'));
     }
 
@@ -54,6 +74,11 @@ class PermissionController extends Controller
      */
     public function edit(Permission $permission)
     {
+        $user = auth()->user();
+        if (!$user->can('update permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to edit permissions.');
+        }
+
         return view('admin.permissions.edit', compact('permission'));
     }
 
@@ -62,6 +87,11 @@ class PermissionController extends Controller
      */
     public function update(Request $request, Permission $permission)
     {
+        $user = auth()->user();
+        if (!$user->can('update permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to update permissions.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:permissions,name,' . $permission->id,
             'description' => 'nullable|string|max:500',
@@ -78,6 +108,11 @@ class PermissionController extends Controller
      */
     public function destroy(Permission $permission)
     {
+        $user = auth()->user();
+        if (!$user->can('delete permissions')) {
+            abort(403, 'Unauthorized - You do not have permission to delete permissions.');
+        }
+
         $permission->delete();
 
         return redirect()->route('admin.permissions.index')
