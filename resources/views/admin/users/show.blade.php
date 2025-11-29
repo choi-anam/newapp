@@ -90,23 +90,26 @@
                     </div>
                     <div class="col-md-6">
                         <h6 class="mb-2">Aksi Cepat</h6>
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil"></i> Edit User
-                            </a>
-                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
-                                <i class="bi bi-key"></i> Reset Password
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Edit User
+                        </a>
+                        <a href="{{ route('admin.users.permissions', $user) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-shield-lock"></i> Kelola Permissions
+                        </a>
+                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                            <i class="bi bi-key"></i> Reset Password
+                        </button>
+                        @if($user->id !== auth()->id())
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                                <i class="bi bi-trash"></i> Hapus User
                             </button>
-                            @if($user->id !== auth()->id())
-                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
-                                    <i class="bi bi-trash"></i> Hapus User
-                                </button>
-                            @else
-                                <button type="button" class="btn btn-secondary btn-sm" disabled title="Tidak dapat menghapus user sendiri">
-                                    <i class="bi bi-trash"></i> Hapus User
-                                </button>
-                            @endif
-                        </div>
+                        @else
+                            <button type="button" class="btn btn-secondary btn-sm" disabled title="Tidak dapat menghapus user sendiri">
+                                <i class="bi bi-trash"></i> Hapus User
+                            </button>
+                        @endif
+                    </div>
                     </div>
                 </div>
             </div>

@@ -33,6 +33,12 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->pr
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::post('/users/{user}/reset-password', [\App\Http\Controllers\Admin\UserController::class, 'resetPassword'])->name('users.reset-password');
     
+    // Permission management for users
+    Route::get('/users/{user}/permissions', [\App\Http\Controllers\Admin\UserController::class, 'showPermissions'])->name('users.permissions');
+    Route::post('/users/{user}/permissions/give', [\App\Http\Controllers\Admin\UserController::class, 'givePermission'])->name('users.permissions.give');
+    Route::post('/users/{user}/permissions/revoke', [\App\Http\Controllers\Admin\UserController::class, 'revokePermission'])->name('users.permissions.revoke');
+    Route::post('/users/{user}/permissions/copy', [\App\Http\Controllers\Admin\UserController::class, 'copyPermissions'])->name('users.permissions.copy');
+    
     // Users API & Export
     Route::get('users-data', [\App\Http\Controllers\Admin\UserController::class, 'getData'])->name('users.data');
     Route::get('users-export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');

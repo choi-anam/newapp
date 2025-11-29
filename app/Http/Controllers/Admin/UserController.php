@@ -130,8 +130,132 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = \Spatie\Permission\Models\Role::all();
-        $user->load('roles');
+        $user->load('roles', 'permissions');
         return view('admin.users.edit', compact('user', 'roles'));
+    }
+
+    /**
+     * Show permissions management page
+     */
+    public function showPermissions(User $user)
+    {
+        $user->load('permissions', 'roles.permissions');
+        
+        // Get all available permissions
+        $allPermissions = \Spatie\Permission\Models\Permission::all();
+        
+        // Get user's direct permissions
+        $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
+        
+        // Get permissions from roles
+        $rolePermissions = $user->roles->flatMap(function($role) {
+            return $role->permissions->pluck('id');
+        })->unique()->toArray();
+        
+        return view('admin.users.permissions', compact('user', 'allPermissions', 'userPermissions', 'rolePermissions'));
+    }
+
+    /**
+     * Give permission to user
+     */
+    public function givePermission(Request $request, User $user)
+    {
+        $request->validate([
+            'permission' => 'required|string|exists:permissions,name',
+        ]);
+
+        if (!$user->hasDirectPermission($request->permission)) {
+            $user->givePermissionTo($request->permission);
+            
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($user)
+                ->withProperties(['permission' => $request->permission, 'action' => 'give-permission'])
+                ->log('gave permission to user');
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Permission '{$request->permission}' berhasil diberikan kepada user"
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => "User sudah memiliki permission ini"
+        ], 409);
+    }
+
+    /**
+     * Revoke permission from user
+     */
+    public function revokePermission(Request $request, User $user)
+    {
+        $request->validate([
+            'permission' => 'required|string|exists:permissions,name',
+        ]);
+
+        if ($user->hasDirectPermission($request->permission)) {
+            $user->revokePermissionTo($request->permission);
+            
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($user)
+                ->withProperties(['permission' => $request->permission, 'action' => 'revoke-permission'])
+                ->log('revoked permission from user');
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Permission '{$request->permission}' berhasil dicabut dari user"
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => "User tidak memiliki permission ini"
+        ], 409);
+    }
+
+    /**
+     * Copy all permissions from source user to target user
+     */
+    public function copyPermissions(Request $request, User $user)
+    {
+        $request->validate([
+            'source_user_id' => 'required|exists:users,id|different:user',
+        ]);
+
+        $sourceUser = User::findOrFail($request->source_user_id);
+        
+        // Get all permissions from source user
+        $sourcePermissions = $sourceUser->getDirectPermissions();
+        
+        if ($sourcePermissions->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => "User sumber tidak memiliki permission apapun"
+            ], 409);
+        }
+
+        // Sync permissions to target user
+        $permissionNames = $sourcePermissions->pluck('name')->toArray();
+        $user->syncPermissions($permissionNames);
+        
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->withProperties([
+                'source_user_id' => $sourceUser->id,
+                'source_user_name' => $sourceUser->name,
+                'permissions_count' => count($permissionNames),
+                'action' => 'copy-permissions'
+            ])
+            ->log('copied permissions from user');
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Total " . count($permissionNames) . " permission berhasil disalin dari user {$sourceUser->name}",
+            'permissions_count' => count($permissionNames)
+        ]);
     }
 
     /**
