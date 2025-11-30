@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title') - Admin Panel</title>
     
     <!-- PWA Manifest & Theme -->
@@ -489,6 +490,26 @@
                     <a href="{{ route('admin.activities.archives') }}" class="nav-link {{ request()->routeIs('admin.activities.archives') ? 'active' : '' }}">
                         <i class="bi bi-archive"></i>
                         <span>Archives Log</span>
+                    </a>
+                </div>
+
+                <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
+
+                <div style="padding: 0.75rem 1rem; color: rgba(255, 255, 255, 0.5); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Configuration
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ route('admin.settings.telegram-bot.index') }}" class="nav-link {{ request()->routeIs('admin.settings.telegram-bot.*') ? 'active' : '' }}">
+                        <i class="bi bi-telegram"></i>
+                        <span>Telegram Bot</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{{ route('admin.settings.email-config.index') }}" class="nav-link {{ request()->routeIs('admin.settings.email-config.*') ? 'active' : '' }}">
+                        <i class="bi bi-envelope"></i>
+                        <span>Email Config</span>
                     </a>
                 </div>
 

@@ -64,6 +64,21 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\IsAdmin::class])->pr
         Route::get('activity-log', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'index'])->name('activity-log.index');
         Route::post('activity-log', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'update'])->name('activity-log.update');
         Route::post('activity-log/{setting}/toggle', [\App\Http\Controllers\Admin\ActivityLogSettingController::class, 'toggle'])->name('activity-log.toggle');
+        
+        // Telegram Bot Configuration
+        Route::get('telegram-bot', [\App\Http\Controllers\Admin\TelegramBotConfigController::class, 'index'])->name('telegram-bot.index');
+        Route::post('telegram-bot', [\App\Http\Controllers\Admin\TelegramBotConfigController::class, 'store'])->name('telegram-bot.store');
+        Route::put('telegram-bot/{config}', [\App\Http\Controllers\Admin\TelegramBotConfigController::class, 'update'])->name('telegram-bot.update');
+        Route::delete('telegram-bot/{config}', [\App\Http\Controllers\Admin\TelegramBotConfigController::class, 'destroy'])->name('telegram-bot.destroy');
+        Route::post('telegram-bot/{config}/toggle', [\App\Http\Controllers\Admin\TelegramBotConfigController::class, 'toggle'])->name('telegram-bot.toggle');
+        
+        // Email Configuration
+        Route::get('email-config', [\App\Http\Controllers\Admin\EmailConfigController::class, 'index'])->name('email-config.index');
+        Route::post('email-config', [\App\Http\Controllers\Admin\EmailConfigController::class, 'store'])->name('email-config.store');
+        Route::put('email-config/{config}', [\App\Http\Controllers\Admin\EmailConfigController::class, 'update'])->name('email-config.update');
+        Route::delete('email-config/{config}', [\App\Http\Controllers\Admin\EmailConfigController::class, 'destroy'])->name('email-config.destroy');
+        Route::post('email-config/{config}/toggle', [\App\Http\Controllers\Admin\EmailConfigController::class, 'toggle'])->name('email-config.toggle');
+        Route::post('email-config/test', [\App\Http\Controllers\Admin\EmailConfigController::class, 'test'])->name('email-config.test');
     });
 });
 

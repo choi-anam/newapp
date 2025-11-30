@@ -7,9 +7,9 @@
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
-MAIL_USERNAME=koleksianam@gmail.com
-MAIL_PASSWORD='grtv laqp znku wkrm'  # App-specific password
-MAIL_FROM_ADDRESS=koleksianam@gmail.com
+MAIL_USERNAME=example@gmail.com  # Username email
+MAIL_PASSWORD=your-password  # App-specific password
+MAIL_FROM_ADDRESS=example@gmail.com
 ```
 
 ### 2. Database Requirements

@@ -21,14 +21,14 @@ Cara ini paling mudah dan akurat.
 2. **Cari bot:** `@userinfobot`
 3. **Klik START** atau kirim `/start`
 4. Bot akan kirim pesan dengan info akun Anda, termasuk **Your user ID**
-5. **Copy angka ID** tersebut (contoh: `1017477218`)
+5. **Copy angka ID** tersebut (contoh: `1123456789`)
 
 **Contoh response dari @userinfobot:**
 ```
 👤 First name: Choirul
 👤 Last name: Anam
 👤 Username: @Choi_anam
-🆔 Your user ID: 1017477218
+🆔 Your user ID: 1123456789
 🌐 Language: id (Indonesian)
 ```
 
@@ -54,7 +54,7 @@ Jika kedua cara di atas tidak jalan:
 2. **Kirim message apapun** ke bot
 3. **Buka browser**, buka link:
    ```
-   https://api.telegram.org/bot6916480326:AAFS-k_GTzNTUJiXoyyQkJDnon7YS3aWyfc/getUpdates
+   https://api.telegram.org/bot[TOKEN]/getUpdates
    ```
 4. Cari di response: `"chat":{"id":XXXXXXX}`
 5. **Angka XXXXXXX itu Telegram ID Anda**
@@ -69,7 +69,7 @@ Jika kedua cara di atas tidak jalan:
       "message": {
         "message_id": 1,
         "chat": {
-          "id": 1017477218,
+          "id": 1123456789,
           "first_name": "Choirul",
           "last_name": "Anam",
           "username": "Choi_anam"
@@ -80,7 +80,7 @@ Jika kedua cara di atas tidak jalan:
 }
 ```
 
-ID yang dicari: `"id": 1017477218`
+ID yang dicari: `"id": 1123456789`
 
 ---
 
@@ -89,7 +89,7 @@ ID yang dicari: `"id": 1017477218`
 Setelah dapat ID, test dulu sebelum update di aplikasi:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot6916480326:AAFS-k_GTzNTUJiXoyyQkJDnon7YS3aWyfc/sendMessage" \
+curl -X POST "https://api.telegram.org/bot[TOKEN]/sendMessage" \
   -d "chat_id=YOUR_TELEGRAM_ID" \
   -d "text=Test%20message" \
   -d "parse_mode=Markdown"
@@ -116,7 +116,7 @@ Setelah dapat ID yang benar:
 ### Cara 1: Via Admin/Database Tool
 ```sql
 UPDATE users 
-SET telegram_id = '1017477218' 
+SET telegram_id = '1123456789' 
 WHERE email = 'your-email@example.com';
 ```
 
@@ -142,7 +142,7 @@ Jika aplikasi punya profile/settings page, update Telegram ID di sana.
 
 ### Checklist:
 - ✅ Telegram ID sudah benar? (gunakan Cara 1 di atas)
-- ✅ Bot token benar? (seharusnya `6916480326:AAFS-k_GTzNTUJiXoyyQkJDnon7YS3aWyfc`)
+- ✅ Bot token benar? (cek di bot @BotFather)
 - ✅ Sudah start bot? (search bot di Telegram dan klik START)
 - ✅ Check logs aplikasi untuk error detail: `storage/logs/laravel.log`
 
