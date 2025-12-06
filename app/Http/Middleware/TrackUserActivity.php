@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class TrackUserActivity
@@ -16,7 +17,10 @@ class TrackUserActivity
             $user = auth()->user();
             $shouldUpdate = $user->last_seen_at === null || $user->last_seen_at->diffInSeconds(now()) >= 60;
             if ($shouldUpdate) {
-                $user->forceFill(['last_seen_at' => now()])->save();
+                // $user->forceFill(['last_seen_at' => now()])->save();
+
+                // don't use forceFill to avoid triggering model events
+                DB::table('users')->where('id', $user->id)->update(['last_seen_at' => now()]);
 
                 // Broadcast updated online users snapshot via websocket
                 try {

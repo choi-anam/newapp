@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request;
 
 class ModelActivityObserver
 {
@@ -11,12 +12,20 @@ class ModelActivityObserver
         return Auth::user();
     }
 
+    protected function getIpAndUserAgent()
+    {
+        return [
+            'ip' => Request::ip(),
+            'user_agent' => Request::userAgent(),
+        ];
+    }
+
     public function created($model)
     {
         activity()
             ->causedBy($this->causer())
             ->performedOn($model)
-            ->withProperties(['attributes' => $this->attributesFor($model)])
+            ->withProperties(['attributes' => $this->attributesFor($model), ...$this->getIpAndUserAgent()])
             ->log('created ' . class_basename($model));
     }
 
@@ -26,7 +35,7 @@ class ModelActivityObserver
         activity()
             ->causedBy($this->causer())
             ->performedOn($model)
-            ->withProperties(['old' => $old, 'changes' => $model->getChanges(), 'attributes' => $this->attributesFor($model)])
+            ->withProperties(['old' => $old, 'changes' => $model->getChanges(), 'attributes' => $this->attributesFor($model), ...$this->getIpAndUserAgent()])
             ->log('updated ' . class_basename($model));
     }
 
@@ -35,7 +44,7 @@ class ModelActivityObserver
         $attrs = $model->getOriginal();
         activity()
             ->causedBy($this->causer())
-            ->withProperties(['attributes' => $attrs])
+            ->withProperties(['attributes' => $attrs, ...$this->getIpAndUserAgent()])
             ->log('deleted ' . class_basename($model));
     }
 
@@ -44,7 +53,7 @@ class ModelActivityObserver
         activity()
             ->causedBy($this->causer())
             ->performedOn($model)
-            ->withProperties(['attributes' => $this->attributesFor($model)])
+            ->withProperties(['attributes' => $this->attributesFor($model), ...$this->getIpAndUserAgent()])
             ->log('restored ' . class_basename($model));
     }
 
